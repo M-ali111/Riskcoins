@@ -76,14 +76,16 @@ async function sendVerificationEmail(email, name, verificationCode) {
                             EMAIL_USER !== 'your-school-email@school.edu' &&
                             EMAIL_PASS !== 'your-app-password-here';
 
-  // In development or if email not configured, just log the code
-  if (process.env.NODE_ENV === 'development' || !isEmailConfigured) {
+  // In development, if email not configured, or if SKIP_EMAIL_VERIFICATION is set, just log the code
+  const skipEmailVerification = process.env.SKIP_EMAIL_VERIFICATION === 'true';
+  
+  if (process.env.NODE_ENV === 'development' || !isEmailConfigured || skipEmailVerification) {
     console.log(`\n========================================`);
     console.log(`📧 VERIFICATION CODE FOR ${email}`);
     console.log(`CODE: ${verificationCode}`);
     console.log(`NAME: ${name}`);
     console.log(`========================================\n`);
-    return { success: true, devMode: true };
+    return { success: true, devMode: true, skipped: skipEmailVerification };
   }
 
   if (!transporter) {
@@ -168,14 +170,16 @@ async function sendPasswordResetEmail(email, name, resetCode) {
                             EMAIL_USER !== 'your-school-email@school.edu' &&
                             EMAIL_PASS !== 'your-app-password-here';
 
-  // In development or if email not configured, just log the code
-  if (process.env.NODE_ENV === 'development' || !isEmailConfigured) {
+  // In development, if email not configured, or if SKIP_EMAIL_VERIFICATION is set, just log the code
+  const skipEmailVerification = process.env.SKIP_EMAIL_VERIFICATION === 'true';
+  
+  if (process.env.NODE_ENV === 'development' || !isEmailConfigured || skipEmailVerification) {
     console.log(`\n========================================`);
     console.log(`🔒 PASSWORD RESET CODE FOR ${email}`);
     console.log(`CODE: ${resetCode}`);
     console.log(`NAME: ${name}`);
     console.log(`========================================\n`);
-    return { success: true, devMode: true };
+    return { success: true, devMode: true, skipped: skipEmailVerification };
   }
 
   if (!transporter) {
