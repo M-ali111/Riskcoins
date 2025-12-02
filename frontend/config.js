@@ -2,4 +2,4 @@
 // For production, change this to your actual Render backend URL
 const API_BASE = window.location.hostname === 'localhost' 
   ? "http://localhost:4000" 
-  : "https://your-backend-name.onrender.com"; // CHANGE THIS to your actual Render backend URL
+  : "https://riskcoins-backend.onrender.com"; // Your actual Render backend URL
