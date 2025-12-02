@@ -1,5 +1,13 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
+
+// Ensure upload directories exist
+const uploadsDir = path.join(__dirname, "..", "..", "uploads", "items");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('✅ Created upload directory:', uploadsDir);
+}
 
 // Allowed file types
 const ALLOWED_TYPES = {
@@ -11,7 +19,7 @@ const ALLOWED_TYPES = {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/items");
+    cb(null, uploadsDir);
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
