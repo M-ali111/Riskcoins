@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Purchase" ADD COLUMN     "qty" INTEGER NOT NULL DEFAULT 1;

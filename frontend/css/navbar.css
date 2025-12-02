@@ -1,0 +1,213 @@
+/*
+  Shared Navbar Styles for RiskCoins
+  Place this in css/navbar.css and include in all HTML files for consistent nav styling.
+*/
+
+
+.riskcoins-navbar {
+  width: 100%;
+  background: linear-gradient(90deg, var(--brand-2) 0%, var(--brand-1) 100%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 24px 0 rgba(46,87,255,0.10);
+  padding: 0 36px;
+  min-height: 68px;
+  border-radius: 0 0 18px 18px;
+  margin-bottom: 32px;
+  position: relative;
+  z-index: 10;
+  flex-wrap: nowrap; /* keep single row on desktop */
+}
+
+
+.riskcoins-navbar .navbar-logo {
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+  margin-left: 32px;
+  margin-right: 0;
+  box-shadow: 0 2px 8px 0 rgba(46,87,255,0.10);
+  border-radius: 12px;
+  background: #fff;
+  padding: 4px 10px;
+  transition: box-shadow 0.2s;
+}
+
+.riskcoins-navbar .navbar-logo:hover {
+  box-shadow: 0 4px 16px 0 rgba(46,87,255,0.18);
+}
+
+
+.riskcoins-navbar .navbar-links {
+  display: flex;
+  flex-direction: row;
+  gap: 28px;
+  margin: 0;
+  margin-left: 18px;
+  flex: 1; /* consume space so logo stays visible */
+}
+
+
+.riskcoins-navbar .navbar-links a {
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 18px;
+  padding: 10px 22px;
+  border-radius: 10px;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+  letter-spacing: 0.02em;
+  position: relative;
+  box-shadow: none;
+}
+
+.riskcoins-navbar .navbar-links a.active,
+.riskcoins-navbar .navbar-links a:hover {
+  background: #fff;
+  color: var(--brand-2);
+  box-shadow: 0 2px 8px 0 rgba(46,87,255,0.10);
+  text-shadow: 0 1px 8px #e6e9f8;
+}
+
+.riskcoins-navbar .navbar-links a.active,
+.riskcoins-navbar .navbar-links a:hover {
+  background: #fff;
+  color: var(--brand-2);
+}
+
+/* Mobile toggle button */
+.navbar-toggle {
+  display: none;
+  background: #fff;
+  color: var(--brand-2);
+  border: none;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(46,87,255,0.12);
+}
+ .navbar-toggle:focus { outline: none; }
+
+
+/* Tablets and below - responsive mobile menu */
+@media (max-width: 900px) {
+  .riskcoins-navbar {
+    display: grid;
+    grid-template-columns: 1fr auto; /* toggle left, logo right */
+    grid-template-rows: 54px auto;   /* top bar + dropdown row */
+    align-items: center;
+    padding: 6px 10px;
+    min-height: 54px;
+    border-radius: 0 0 12px 12px; /* smaller rounding on mobile */
+    margin-bottom: 16px; /* tighten spacing under navbar */
+  }
+  .navbar-toggle {
+    display: inline-block;
+    margin: 8px 6px;
+    font-size: 18px;
+    justify-self: start;
+    background: #fff; /* ensure readable on gradient */
+    padding: 6px 10px;
+    border-radius: 10px;
+    grid-row: 1; /* stay on header row */
+    transition: all 0.2s ease;
+  }
+  .navbar-toggle:hover{
+    box-shadow: 0 4px 12px rgba(46,87,255,0.2);
+    transform: translateY(-1px);
+  }
+  .riskcoins-navbar .navbar-logo {
+    height: 40px;
+    margin: 8px 6px;
+    justify-self: end;
+    grid-row: 1; /* stay on header row */
+  }
+  .riskcoins-navbar .navbar-links {
+    display: flex; /* keep for height animation */
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    align-items: flex-start;
+    padding: 0 6px; /* inner padding collapses when closed */
+    grid-column: 1 / -1; /* dropdown spans full width below */
+    grid-row: 2;         /* force into second row */
+    background: transparent; /* keep dropdown on same gradient */
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: max-height .25s ease, opacity .25s ease, padding .25s ease;
+  }
+  .riskcoins-navbar.open .navbar-links {
+    max-height: 600px; /* allow room for all links */
+    opacity: 1;
+    padding: 8px 6px 12px;
+    pointer-events: auto;
+  }
+  .riskcoins-navbar .navbar-links a { 
+    font-size: 16px; 
+    padding: 8px 14px;
+    width: 100%;
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 600px) {
+  .riskcoins-navbar {
+    padding: 4px 8px;
+    margin-bottom: 12px;
+    border-radius: 0 0 10px 10px;
+  }
+  .navbar-toggle {
+    font-size: 16px;
+    padding: 5px 8px;
+    margin: 6px 4px;
+  }
+  .riskcoins-navbar .navbar-logo {
+    height: 36px;
+    margin: 6px 4px;
+    padding: 3px 8px;
+  }
+  .riskcoins-navbar .navbar-links a {
+    font-size: 15px;
+    padding: 10px 12px;
+  }
+}
+
+/* Place logo at right for desktop */
+.riskcoins-navbar .navbar-links {
+  order: 1;
+}
+.riskcoins-navbar .navbar-logo {
+  order: 2;
+  margin-left: auto;
+}
+
+/* Smooth dropdown animation for mobile */
+.riskcoins-navbar .navbar-links { transition: all .2s ease; }
+.riskcoins-navbar.open .navbar-links { opacity: 1; }
+/* ============================================================
+   Tablet (portrait/landscape) adjustments: 600px–1100px
+   Reduce link spacing and font size so logo + links fit.
+============================================================ */
+@media (max-width: 1100px){
+  .riskcoins-navbar { padding: 0 20px; }
+  .riskcoins-navbar .navbar-links { gap: 18px; }
+  .riskcoins-navbar .navbar-logo { height: 46px; }
+}
+@media (max-width: 900px){
+  /* rules already defined above for mobile grid layout */
+}
+
+
+/* Extra responsiveness for very small screens */
+@media (max-width: 360px){
+  .riskcoins-navbar { padding: 6px; }
+  .navbar-toggle { padding: 6px 8px; font-size: 16px; }
+  .riskcoins-navbar .navbar-logo { height: 34px; padding: 2px 6px; }
+}
+
+/* Ensure image path is consistent — if using different logo, update src in pages */

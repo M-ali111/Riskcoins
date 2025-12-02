@@ -1,0 +1,324 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Admin • Students</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Page background */
+    body { background: linear-gradient(135deg,#f8f9ff 0%, #ffffff 100%); }
+
+    /* Header bar */
+    .header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:16px; background: linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); box-shadow: 0 12px 24px rgba(31,111,235,0.18); color:#fff; }
+    .header .title { font-size: 22px; font-weight: 800; letter-spacing:.4px; }
+    .header .avatar { width:40px; height:40px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; border:2px solid #ffffff55; }
+
+    /* Card */
+    .card { background: linear-gradient(135deg,#ffffff 0%, #f8f9ff 100%); border: 2px solid #e5e7ff; border-radius: 16px; padding: 20px; box-shadow: 0 10px 24px rgba(102,126,234,0.12); }
+
+    /* Filter bar */
+    .filter-row { display:flex; gap:12px; align-items:center; margin-bottom:12px; }
+    .filter-row input, .filter-row select { padding:12px 14px; border:2px solid #e5e7ff; border-radius:12px; font-size:14px; transition: all .2s; box-sizing:border-box; background:#fff; }
+    .filter-row input:focus, .filter-row select:focus { outline:none; border-color:#667eea; box-shadow: 0 0 0 4px rgba(102,126,234,.12); }
+    .buy-btn { background: linear-gradient(135deg,var(--brand-2) 0%, var(--brand-1) 100%); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:800; letter-spacing:.4px; cursor:pointer; box-shadow:0 6px 16px rgba(31,111,235,.28); transition: all .2s; }
+    .buy-btn:hover { transform: translateY(-2px); box-shadow:0 8px 20px rgba(31,111,235,.36); }
+
+    /* Table */
+    .table { width:100%; border-collapse: collapse; overflow:hidden; border-radius: 12px; border:2px solid #e5e7ff; }
+    .table thead { background:#f3f4ff; }
+    .table th { text-align:left; padding:12px; font-size:13px; color:#1a1a2e; font-weight:800; border-bottom:2px solid #e5e7ff; }
+    .table td { padding:12px; font-size:13px; color:#3a3a4e; border-bottom:1px solid #eef1ff; }
+    .table tbody tr:hover { background:#fafbff; }
+
+    /* Pagination */
+    .small{font-size:13px;color:#666}
+    .pager { display:flex; justify-content:space-between; align-items:center; margin-top:12px; }
+    .btn-quiet{background:#f3f4ff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+    .btn-quiet:hover{background:#e5e7ff}
+
+    /* Modal */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(10,10,20,0.4);backdrop-filter: blur(3px);display:flex;align-items:center;justify-content:center;z-index:9999}
+    .modal{background:white;border-radius:16px;padding:20px;min-width:320px;max-width:720px;border:2px solid #e5e7ff;box-shadow:0 20px 60px rgba(102,126,234,.25)}
+    .modal h3{margin-bottom:10px;color:#1a1a2e}
+    .modal .row{display:flex;gap:10px}
+  </style>
+</head>
+
+
+<body>
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="admin_home.html">Home</a>
+    <a href="admin_panel.html">Admin Panel</a>
+    <a href="admin_students.html" class="active">Students</a>
+    <a href="admin_houses.html">Manage Houses</a>
+    <a href="admin_events.html">Events</a>
+    <a href="admin_shop.html">Manage Shop</a>
+    <a href="index.html" id="logoutMobile">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+<div class="app-shell">
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="header">
+      <div class="title">Manage Students</div>
+      <div class="controls"><div class="avatar" id="avatar">A</div></div>
+    </div>
+
+    <div class="card">
+
+      <!-- FILTER BAR -->
+      <div class="filter-row">
+        <input id="searchQ" placeholder="Search by name or email" style="flex:1">
+        <select id="filterHouse">
+          <option value="">All Houses</option>
+        </select>
+        <button id="searchBtn" class="buy-btn">Search</button>
+      </div>
+
+      <!-- TABLE -->
+      <div class="table-wrap">
+        <table class="table" style="width:100%">
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>House</th><th>Points</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="studentsBody"></tbody>
+        </table>
+      </div>
+
+      <!-- PAGINATION -->
+      <div class="pager">
+        <div class="small" id="pagerInfo"></div>
+        <div>
+          <button id="prevPage" class="btn-quiet">Prev</button>
+          <button id="nextPage" class="btn-quiet">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ROOT -->
+<div id="modalRoot" style="display:none"></div>
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+/* AUTH CHECK */
+const token = localStorage.getItem('rc_token');
+if (!token) location.href = 'index.html';
+
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+let currentPage = 1;
+const limit = 12;
+
+/* ===========================================
+   LOAD HOUSES (CORRECT ENDPOINT)
+=========================================== */
+async function loadHouses(){
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/houses`, { headers });
+    const houses = await res.json();
+    const sel = document.getElementById('filterHouse');
+
+    sel.innerHTML = `<option value="">All Houses</option>`;
+
+    houses.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h.id;              // FIXED (uses house.id)
+      opt.textContent = h.name;
+      sel.appendChild(opt);
+    });
+
+  } catch (err) { console.error("House load error", err); }
+}
+
+/* ===========================================
+   LOAD STUDENTS (CORRECT ENDPOINT)
+=========================================== */
+async function loadStudents(page = 1){
+  currentPage = page;
+
+  const q = document.getElementById('searchQ').value.trim();
+  const houseId = document.getElementById('filterHouse').value;
+
+  const url = new URL(`${API_BASE}/api/admin/students`);
+  url.searchParams.set("page", page);
+  url.searchParams.set("limit", limit);
+  if (q) url.searchParams.set("q", q);
+  if (houseId) url.searchParams.set("houseId", houseId);
+
+  try {
+    const res = await fetch(url.toString(), { headers });
+    const data = await res.json();
+
+    const tbody = document.getElementById('studentsBody');
+    tbody.innerHTML = "";
+
+    data.students.forEach(s => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${s.name}</strong></td>
+        <td>${s.email}</td>
+        <td>${s.house ? s.house.name : "—"}</td>
+        <td>${s.points}</td>
+        <td>
+          <button class="btn-quiet" onclick="openEditModal('${s.id}')">Edit</button>
+          <button class="btn-quiet" onclick="openResetModal('${s.id}','${s.name}')">Reset PW</button>
+          <button class="btn-quiet" style="color:#e53e3e" onclick="deleteStudent('${s.id}','${s.name}')">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    /* Pagination Info */
+    const start = (data.page - 1) * data.limit + 1;
+    const end = Math.min(data.total, data.page * data.limit);
+    document.getElementById("pagerInfo").textContent =
+      `Showing ${start}-${end} of ${data.total}`;
+
+    document.getElementById("prevPage").disabled = data.page <= 1;
+    document.getElementById("nextPage").disabled = (data.page * data.limit) >= data.total;
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load students.");
+  }
+}
+
+/* Pagination */
+document.getElementById("searchBtn").onclick = () => loadStudents(1);
+document.getElementById("prevPage").onclick = () => { if (currentPage > 1) loadStudents(currentPage - 1); };
+document.getElementById("nextPage").onclick = () => loadStudents(currentPage + 1);
+
+/* ===========================================
+   MODALS (Edit, Reset, Delete)
+=========================================== */
+
+function createModal(html){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = `<div class="modal-backdrop" id="mb"><div class="modal">${html}</div></div>`;
+  root.style.display = "block";
+  document.getElementById("mb").onclick = e => { if (e.target.id === "mb") closeModal(); };
+}
+
+function closeModal(){
+  const root = document.getElementById("modalRoot");
+  root.innerHTML = "";
+  root.style.display = "none";
+}
+
+/* Edit Student */
+async function openEditModal(id){
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/students/${id}`, { headers });
+    const s = await res.json();
+
+    const housesRes = await fetch(`${API_BASE}/api/admin/houses`, { headers });
+    const houses = await housesRes.json();
+
+    let houseOptions = houses.map(h =>
+      `<option value="${h.id}" ${s.house && s.house.id === h.id ? "selected" : ""}>${h.name}</option>`
+    ).join("");
+
+    const html = `
+      <h3>Edit Student</h3>
+      <label>Name</label><input id="editName" value="${s.name}">
+      <label>Email</label><input id="editEmail" value="${s.email}">
+      <label>House</label>
+      <select id="editHouse"><option value="">None</option>${houseOptions}</select>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+        <button class="btn-quiet" onclick="closeModal()">Cancel</button>
+        <button class="buy-btn" onclick="saveEdit('${id}')">Save</button>
+      </div>
+    `;
+
+    createModal(html);
+
+  } catch (err) {
+    alert("Unable to load student");
+  }
+}
+
+async function saveEdit(id){
+  const name = document.getElementById("editName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const houseId = document.getElementById("editHouse").value || undefined;
+
+  const res = await fetch(`${API_BASE}/api/admin/students/${id}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ name, email, houseId })
+  });
+
+  if (!res.ok) return alert("Update failed");
+
+  alert("Updated!");
+  closeModal();
+  loadStudents(currentPage);
+}
+
+/* Reset Password */
+function openResetModal(id, name){
+  const html = `
+    <h3>Reset Password — ${name}</h3>
+    <label>New Password</label>
+    <input id="pw1" type="password" placeholder="Min 6 characters">
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+      <button class="btn-quiet" onclick="closeModal()">Cancel</button>
+      <button class="buy-btn" onclick="doReset('${id}')">Reset</button>
+    </div>
+  `;
+  createModal(html);
+}
+
+async function doReset(id){
+  const pw = document.getElementById("pw1").value.trim();
+  if (pw.length < 6) return alert("Password must be ≥ 6 characters");
+
+  const res = await fetch(`${API_BASE}/api/admin/students/${id}/reset-password`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ newPassword: pw })
+  });
+
+  if (!res.ok) return alert("Reset failed");
+
+  alert("Password reset");
+  closeModal();
+}
+
+/* Delete Student */
+async function deleteStudent(id, name){
+  if (!confirm(`Delete ${name}?`)) return;
+
+  const res = await fetch(`${API_BASE}/api/admin/students/${id}`, {
+    method: "DELETE",
+    headers
+  });
+
+  if (!res.ok) return alert("Delete failed");
+
+  alert("Deleted");
+  loadStudents(currentPage);
+}
+
+/* INIT */
+loadHouses();
+loadStudents(1);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RIS Coins — Manage Houses</title>
+  <link rel="stylesheet" href="css/style.css">
+
+  <style>
+    body { background: radial-gradient(1200px 600px at 10% -10%, #fff7eb 0%, #ffffff 35%, #f6f8ff 100%); }
+
+    /* Header aesthetics */
+    .header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; background:linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); color:#fff; border-radius:16px; box-shadow:0 10px 24px rgba(31,111,235,.18); }
+    .header .title { font-size:22px; font-weight:800; letter-spacing:.3px; }
+    .header .controls .avatar { width:36px; height:36px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; }
+
+    /* Card */
+    .card { background:#fff; border:1px solid #e9ecff; border-radius:16px; box-shadow:0 10px 26px rgba(17,25,40,.06); }
+    .card h3 { margin:0 0 6px; font-weight:800; }
+    .card p { margin:0 0 18px; color:#5b6480; }
+
+    .house-card {
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:16px;
+      background:white;
+      box-shadow:var(--shadow);
+      text-align:center;
+      transition:transform .18s ease, box-shadow .18s ease;
+    }
+
+    .house-card:hover { transform:translateY(-2px); box-shadow:0 12px 22px rgba(17,25,40,.08); }
+
+    .house-logo {
+      width:100%;
+      height:150px;
+      object-fit:cover;
+      border-radius:10px;
+      background:#fafafa;
+      border:1px solid #eee;
+      margin-bottom:12px;
+    }
+
+    input[type="text"] { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d6daf0; text-align:center; font-size:15px; margin-bottom:10px; font-weight:600; background:#fbfcff; }
+    input[type="file"] { width:100%; padding:10px; border-radius:10px; border:1px dashed #d6daf0; background:#fbfcff; }
+    .btn { background:#1f6feb; color:#fff; border:none; padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
+    .btn:hover { background:#1757c5; }
+    .grid { display:grid; grid-template-columns:1fr; gap:18px; }
+    @media (min-width: 900px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+
+
+<body>
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="admin_home.html">Home</a>
+    <a href="admin_panel.html">Admin Panel</a>
+    <a href="admin_students.html">Students</a>
+    <a href="admin_houses.html" class="active">Manage Houses</a>
+      <a href="admin_events.html">Events</a>
+      <a href="admin_shop.html">Manage Shop</a>
+    <a href="index.html" id="logoutLink">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+<div class="app-shell">
+
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="header">
+      <div class="title">Manage Houses</div>
+      <div class="controls"><div class="avatar" id="avatar">A</div></div>
+    </div>
+
+    <div class="grid">
+
+      <div class="col-12 card">
+
+        <h3>House Logos & Names</h3>
+        <p style="color:var(--muted);margin-top:4px;margin-bottom:16px">
+          Upload or update each house’s logo. Recommended size: 300×300 PNG.
+        </p>
+
+        <div id="housesGrid"
+             style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px;">
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+/* AUTH */
+const token = localStorage.getItem("rc_token");
+if(!token) location.href = "index.html";
+document.getElementById("logoutLink").onclick = () => localStorage.clear();
+
+const authHeaders = { Authorization: `Bearer ${token}` };
+
+/* LOAD HOUSES */
+async function loadHouses() {
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/houses?_=${Date.now()}`, { headers: authHeaders });
+    
+    if (res.status === 401 || res.status === 403) {
+      console.error('Authentication failed. Redirecting to login...');
+      localStorage.clear();
+      location.href = 'index.html';
+      return;
+    }
+    
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: 'Failed to load houses' }));
+      throw new Error(error.error || 'Failed to load houses');
+    }
+    
+    const houses = await res.json();
+
+    const grid = document.getElementById("housesGrid");
+    grid.innerHTML = "";
+
+    const cacheBust = Date.now();
+    houses.forEach(h => {
+      const imgUrl = h.imageUrl
+        ? `${API_BASE}${h.imageUrl}?v=${cacheBust}`
+        : "assets/logo.jpg";
+
+      const card = document.createElement("div");
+      card.className = "house-card";
+
+      card.innerHTML = `
+        <img src="${imgUrl}" 
+             class="house-logo" 
+             id="preview-${h.id}"
+             onerror="this.onerror=null; this.src='assets/logo.jpg';">
+
+        <input type="text" id="name-${h.id}" value="${h.name}">
+
+        <input type="file" id="file-${h.id}" accept="image/*"
+               onchange="previewLogo('${h.id}')"
+               style="margin-bottom:10px;width:100%">
+
+        <button class="btn" style="width:100%" onclick="updateHouse('${h.id}')">
+          Save
+        </button>
+      `;
+
+      grid.appendChild(card);
+    });
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to load houses");
+  }
+}
+
+/* PREVIEW BEFORE UPLOAD */
+function previewLogo(id) {
+  const file = document.getElementById(`file-${id}`).files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = document.getElementById(`preview-${id}`);
+    img.src = reader.result;
+    // Mark this image as locally previewed
+    img.dataset.isPreview = 'true';
+  };
+  reader.readAsDataURL(file);
+}
+
+/* UPDATE HOUSE */
+async function updateHouse(id) {
+  const name = document.getElementById(`name-${id}`).value.trim();
+  const file = document.getElementById(`file-${id}`).files[0];
+
+  const formData = new FormData();
+  if (name) formData.append("name", name);
+  if (file) formData.append("logo", file);  // correct field name
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/houses/${id}`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Failed to update house");
+      return;
+    }
+
+    alert("✔ House updated");
+    
+    // Force clear any cached image for this house
+    const img = document.getElementById(`preview-${id}`);
+    if (img) {
+      img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // transparent pixel
+    }
+    
+    // Wait a moment then reload to ensure new image is ready
+    setTimeout(() => {
+      loadHouses();
+    }, 500);
+
+  } catch (err) {
+    console.error(err);
+    alert("Error updating house.");
+  }
+}
+
+/* INIT */
+loadHouses();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Student Home — RIS Coins</title>
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+/* Admin-style header for consistency */
+.header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:16px; background: linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); box-shadow: 0 12px 24px rgba(31,111,235,0.18); color:#fff; }
+.header .title { font-size:22px; font-weight:800; }
+.header .avatar { width:40px; height:40px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; border:2px solid #ffffff55; }
+.house-card{
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding:14px;
+  background:white;
+  border-radius:14px;
+  border:1px solid #e5e7ff;
+  margin-bottom:16px;
+}
+.house-logo{
+  width:54px;
+  height:54px;
+  border-radius:10px;
+  object-fit:cover;
+}
+.bar-wrap{
+  flex:1;
+  height:14px;
+  background:#eef1ff;
+  border-radius:10px;
+  position:relative;
+}
+.bar{
+  height:100%;
+  border-radius:10px;
+  background:linear-gradient(90deg,#0099ff,#0057ff);
+}
+.bar-text{
+  position:absolute;
+  right:10px;
+  top:-22px;
+  font-size:13px;
+  font-weight:700;
+  color:#333;
+}
+</style>
+
+</head>
+
+<body>
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="student_home.html" class="active">Home</a>
+    <a href="student_dashboard.html">Dashboard</a>
+    <a href="shop.html">Shop</a>
+    <a href="student_activity.html">Activities</a>
+    <a href="student_events.html">Events</a>
+    <a href="index.html" id="logoutLink">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+
+
+  <main class="main">
+    <div class="header">
+      <div class="title">House Rating</div>
+      <div class="avatar" id="avatar">S</div>
+    </div>
+
+    <div class="grid">
+      <div class="col-12 card">
+        <h3>House Standings</h3>
+        <p>Live leaderboard of all school houses.</p>
+        <div id="leaders" style="margin-top:12px"></div>
+
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+const token = localStorage.getItem("rc_token");
+if(!token) location.href = "index.html";
+
+// logout
+document.getElementById("logoutLink").onclick = () => localStorage.clear();
+
+// --------------------------------------------------
+// LOAD HOUSE LEADERBOARD
+// --------------------------------------------------
+async function loadLeaderboard(){
+  try{
+    const res = await fetch(`${API_BASE}/api/houses/leaderboard`);
+    const houses = await res.json();
+
+    const container = document.getElementById("leaders");
+    container.innerHTML = "";
+
+    const max = Math.max(...houses.map(h => h.total || 0), 1);
+
+    const cacheBust = Date.now();
+    houses.forEach(h => {
+      const percent = Math.round(((h.total || 0)/max) * 100);
+
+      const logoUrl = h.imageUrl 
+        ? `${API_BASE}${h.imageUrl}?v=${cacheBust}`
+        : "assets/logo.jpg";
+
+      const card = document.createElement("div");
+      card.className = "house-card";
+
+      card.innerHTML = `
+        <img src="${logoUrl}" class="house-logo" 
+             onerror="this.onerror=null; this.src='assets/logo.jpg';">
+
+        <div>
+          <strong>${h.name}</strong><br>
+          <span style="font-size:12px;color:#666">${h.total || 0} RC</span>
+        </div>
+
+        <div class="bar-wrap">
+          <div class="bar" style="width:${percent}%"></div>
+          <div class="bar-text">${percent}%</div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+
+  }catch(err){
+    console.error("error loading leaderboard", err);
+  }
+}
+
+loadLeaderboard();
+</script>
+</body>
+</html>

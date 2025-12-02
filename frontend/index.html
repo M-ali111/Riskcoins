@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Login</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="gradient-bg">
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="signup.html">Student Signup</a>
+    <a href="admin_signup.html">Admin Signup</a>
+    <a href="teacher_signup.html">Teacher Signup</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+  <main style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:28px">
+    <div style="max-width:420px;width:100%">
+      <div class="card" style="text-align:center;padding:28px">
+        <img src="assets/logo.jpg" alt="logo" style="width:160px;margin:0 auto 12px;display:block">
+        <h2 style="margin-bottom:8px;color:var(--primary-600)">Welcome to RIS Coins</h2>
+        <p style="color:var(--muted);margin-bottom:18px">School house points & rewards</p>
+
+        <div style="margin-bottom:10px"><input id="email" placeholder="Email"></div>
+        <div style="margin-bottom:10px"><input id="password" type="password" placeholder="Password"></div>
+        <div style="margin-bottom:14px">
+          <select id="roleSelect">
+            <option value="STUDENT">Student</option>
+            <option value="ADMIN">Admin</option>
+          </select>
+        </div>
+        <button class="buy-btn" id="loginBtn" style="background:var(--primary);width:100%">Login</button>
+
+        <div style="margin-top:12px;text-align:center">
+          <a href="forgot_password.html" style="color:var(--primary);font-size:14px;text-decoration:none">Forgot Password?</a>
+        </div>
+
+        <div style="margin-top:12px;color:var(--muted);font-weight:600">
+          <a href="signup.html">Student</a> • <a href="admin_signup.html">Admin</a> • <a href="teacher_signup.html">Teacher</a>
+        </div>
+        <p id="msg" style="margin-top:12px;color:var(--danger)"></p>
+      </div>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script>
+    // Mobile navbar toggle
+    document.getElementById('navToggle')?.addEventListener('click', () => {
+      document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+    });
+  </script>
+  <script>
+    document.getElementById('loginBtn').onclick = async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const msg = document.getElementById('msg');
+      if(!email||!password){ msg.textContent='Enter email & password'; return }
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/login`,{
+          method:'POST',headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({email,password})
+        });
+        const data = await res.json();
+        
+        if(!res.ok){ 
+          // Check if email needs verification
+          if (data.needsVerification && data.email) {
+            msg.textContent = 'Email not verified. Redirecting to verification...';
+            setTimeout(() => {
+              location.href = `verify_email.html?email=${encodeURIComponent(data.email)}`;
+            }, 1500);
+            return;
+          }
+          msg.textContent = data.error || JSON.stringify(data); 
+          return;
+        }
+        
+        localStorage.setItem('rc_token', data.token);
+        localStorage.setItem('rc_role', data.role);
+        localStorage.setItem('rc_user', JSON.stringify(data.user));
+        if(data.role === 'ADMIN') location.href = 'admin_panel.html';
+        else if(data.role === 'TEACHER') location.href = 'teacher_dashboard.html';
+        else location.href = 'student_dashboard.html';
+      } catch(e){ msg.textContent='Network error' }
+    };
+  </script>
+</body>
+</html>

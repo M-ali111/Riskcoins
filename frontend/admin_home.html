@@ -1,0 +1,238 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Home — RIS Coins</title>
+<link rel="stylesheet" href="css/style.css">
+
+<style>
+body { background: radial-gradient(1200px 600px at 10% -10%, #fff7eb 0%, #ffffff 35%, #f6f8ff 100%); }
+/* Header */
+.header { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; background:linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); color:#fff; border-radius:16px; box-shadow:0 10px 24px rgba(31,111,235,.18); }
+.header .title { font-size:22px; font-weight:800; letter-spacing:.3px; }
+.header .avatar { width:36px; height:36px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; }
+/* Card */
+.card { background:#fff; border:1px solid #e9ecff; border-radius:16px; box-shadow:0 10px 26px rgba(17,25,40,.06); }
+.card h3 { margin:0 0 6px; font-weight:800; }
+.card p { margin:0 0 18px; color:#5b6480; }
+/* House row style */
+.house-card {
+  display:flex;
+  align-items:center;
+  gap:18px;
+  padding:14px;
+  background:white;
+  border-radius:14px;
+  border:1px solid #e5e7ff;
+  margin-bottom:16px;
+}
+.house-card { transition:transform .18s ease, box-shadow .18s ease; }
+.house-card:hover { transform:translateY(-2px); box-shadow:0 12px 22px rgba(17,25,40,.08); }
+/* Rank badge */
+.rank-badge { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; flex:0 0 34px; }
+.rank-1 { background:linear-gradient(180deg,#f59e0b,#ff7a00); }
+.rank-2 { background:linear-gradient(180deg,#64748b,#94a3b8); }
+.rank-3 { background:linear-gradient(180deg,#10b981,#34d399); }
+.rank-default { background:#9aa3b2; }
+
+/* Logo */
+.house-logo {
+  width:54px;
+  height:54px;
+  border-radius:10px;
+  object-fit:cover;
+  background:#f7f7f7;
+  border:1px solid #ddd;
+}
+
+/* Bar container */
+.bar-wrap {
+  flex:1;
+  height:14px;
+  background:#eef1ff;
+  border-radius:10px;
+  position:relative;
+  overflow:hidden;
+}
+
+/* Animated RC bar */
+.bar {
+  height:100%;
+  border-radius:10px;
+  background:linear-gradient(90deg,#ff9100,#ff5e00);
+  width:0;
+  transition:width .8s ease;
+}
+
+/* Percent text */
+.bar-text {
+  position:absolute;
+  right:10px;
+  top:-22px;
+  font-size:13px;
+  font-weight:700;
+  color:#333;
+}
+/* Layout helpers */
+.grid { display:grid; grid-template-columns:1fr; gap:18px; }
+@media (min-width: 900px) { .grid { grid-template-columns: 1.2fr .8fr; } }
+.col-8 { grid-column:1; }
+/* Summary card */
+.summary { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.summary .tile { background:#ffffff; border:1px solid #e9ecff; border-radius:14px; padding:14px; box-shadow:0 6px 18px rgba(17,25,40,.06); }
+.summary .tile .label { font-size:12px; color:#6b7280; }
+.summary .tile .value { font-size:20px; font-weight:800; }
+</style>
+</head>
+
+
+
+<body>
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="admin_home.html" class="active">Home</a>
+    <a href="admin_panel.html">Admin Panel</a>
+    <a href="admin_students.html">Students</a>
+    <a href="admin_houses.html">Manage Houses</a>
+    <a href="admin_events.html">Events</a>
+    <a href="admin_shop.html">Manage Shop</a>
+    <a href="index.html" id="logoutLink">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+<div class="app-shell">
+  </aside>
+
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="header">
+      <div class="title">House Leaderboard</div>
+      <div class="avatar" id="avatar">A</div>
+    </div>
+
+    <div class="grid">
+
+      <!-- LEADERBOARD LIST -->
+      <div class="col-8 card">
+        <h3>House Standings</h3>
+        <p>Top houses by total RIS Coins.</p>
+
+        <!-- Summary tiles -->
+        <div class="summary" id="summaryTiles" style="margin-bottom:14px"></div>
+
+        <div id="leaders"></div>
+      </div>
+
+      <!-- Right column: tips -->
+      <div class="card" style="padding:16px">
+        <h3 style="margin-bottom:8px">Quick Tips</h3>
+        <ul style="margin:0; padding-left:18px; color:#5b6480">
+          <li>Use Admin Panel to award/deduct RC.</li>
+          <li>Manage Houses to update names and logos.</li>
+          <li>Events help engage students and track participation.</li>
+        </ul>
+
+        <!-- Teacher Requests banner -->
+        <div style="margin-top:18px; padding:14px; border:2px dashed #e5e7ff; border-radius:14px; background:#fafbff">
+          <div style="font-weight:800; margin-bottom:8px; color:#1a1a2e">Review Teacher Requests</div>
+          <p style="margin:0 0 10px; color:#5b6480">Approve or reject pending point changes submitted by teachers.</p>
+          <a href="admin_requests.html" class="btn" style="display:inline-block">Open Teacher Requests</a>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+/* AUTH */
+const token = localStorage.getItem("rc_token");
+if (!token) location.href = "index.html";
+document.getElementById("logoutLink").onclick = () => localStorage.clear();
+
+/* Load House Leaderboard */
+async function loadLeaderboard() {
+  try {
+    const res = await fetch(`${API_BASE}/api/houses/leaderboard`);
+    const houses = await res.json();
+
+    const container = document.getElementById("leaders");
+    container.innerHTML = "";
+
+    // Summary tiles
+    const totalRC = houses.reduce((sum, h) => sum + (h.total || 0), 0);
+    const avgRC = houses.length ? Math.round(totalRC / houses.length) : 0;
+    const topHouse = houses[0]?.name || "—";
+    document.getElementById("summaryTiles").innerHTML = `
+      <div class="tile"><div class="label">Total RC</div><div class="value">${totalRC}</div></div>
+      <div class="tile"><div class="label">Average per House</div><div class="value">${avgRC}</div></div>
+      <div class="tile"><div class="label">Top House</div><div class="value">${topHouse}</div></div>
+    `;
+
+    const max = Math.max(...houses.map(h => h.total || 0), 1);
+
+    houses.forEach(h => {
+      const percent = Math.round(((h.total || 0) / max) * 100);
+
+      const logoUrl = h.imageUrl
+        ? `${API_BASE}${h.imageUrl}?v=${Date.now()}`
+        : "assets/logo.jpg";
+
+      const row = document.createElement("div");
+      row.className = "house-card";
+
+      const rankClass = idxToRankClass(container.children.length + 1);
+      row.innerHTML = `
+        <div class="rank-badge ${rankClass}">${container.children.length + 1}</div>
+        <img src="${logoUrl}" class="house-logo" onerror="this.src='assets/logo.jpg'">
+        <div style="min-width:120px">
+          <strong>${h.name}</strong><br>
+          <span style="font-size:12px;color:#666">${h.total} RC</span>
+        </div>
+        <div class="bar-wrap">
+          <div class="bar" style="width:${percent}%"></div>
+          <div class="bar-text">${percent}%</div>
+        </div>
+      `;
+
+      container.appendChild(row);
+    });
+
+  } catch (err) {
+    console.error("Leaderboard Load Error:", err);
+  }
+}
+
+/* Initial Load */
+function idxToRankClass(n){
+  if(n===1) return 'rank-1';
+  if(n===2) return 'rank-2';
+  if(n===3) return 'rank-3';
+  return 'rank-default';
+}
+
+loadLeaderboard();
+
+/* Optional: Refresh every 10 seconds */
+setInterval(loadLeaderboard, 10000);
+
+</script>
+
+</body>
+</html>

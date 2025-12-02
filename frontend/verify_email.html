@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Email Verification</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="gradient-bg">
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="index.html">Login</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+</nav>
+  <main style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:28px">
+    <div style="max-width:520px;width:100%">
+      <div class="card">
+        <div style="display:flex;gap:12px;align-items:center;flex-direction:column;text-align:center">
+          <div>
+            <h3 style="margin-bottom:4px;color:var(--primary-600)">Verify Your Email</h3>
+            <div style="color:var(--muted);margin-top:8px">
+              We've sent a 6-digit verification code to:<br>
+              <strong id="userEmail" style="color:var(--primary-600)"></strong>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px">
+          <label>Verification Code</label>
+          <input 
+            id="verificationCode" 
+            placeholder="Enter 6-digit code" 
+            maxlength="6"
+            style="text-align:center;font-size:24px;letter-spacing:4px;font-weight:bold"
+          >
+
+          <div style="display:flex;gap:10px;margin-top:16px;flex-direction:column">
+            <button class="buy-btn" id="verifyBtn">Verify Email</button>
+            <button class="buy-btn" id="resendBtn" style="background:var(--secondary-500)">Resend Code</button>
+            <a href="index.html" style="text-align:center;color:var(--muted)">Back to login</a>
+          </div>
+          
+          <div id="msg" style="margin-top:12px;padding:12px;border-radius:8px;display:none"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script src="config.js"></script>
+<script>
+// Get email from URL parameter
+const urlParams = new URLSearchParams(window.location.search);
+const email = urlParams.get('email');
+
+if (!email) {
+  alert('No email provided. Redirecting to signup.');
+  location.href = 'signup.html';
+} else {
+  document.getElementById('userEmail').textContent = email;
+}
+
+const msg = document.getElementById('msg');
+
+function showMessage(text, isError = false) {
+  msg.style.display = 'block';
+  msg.textContent = text;
+  msg.style.background = isError ? 'var(--danger-bg)' : 'var(--success-bg)';
+  msg.style.color = isError ? 'var(--danger)' : 'var(--success)';
+  msg.style.border = `1px solid ${isError ? 'var(--danger)' : 'var(--success)'}`;
+}
+
+// Verify button handler
+document.getElementById('verifyBtn').onclick = async () => {
+  const code = document.getElementById('verificationCode').value.trim();
+  
+  if (!code || code.length !== 6) {
+    showMessage('Please enter a valid 6-digit code', true);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code })
+    });
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+      showMessage(data.error || 'Verification failed', true);
+      return;
+    }
+    
+    showMessage('Email verified successfully! Redirecting to login...', false);
+    setTimeout(() => {
+      location.href = 'index.html';
+    }, 2000);
+    
+  } catch (e) {
+    showMessage('Network error. Please try again.', true);
+  }
+};
+
+// Resend button handler
+document.getElementById('resendBtn').onclick = async () => {
+  const resendBtn = document.getElementById('resendBtn');
+  resendBtn.disabled = true;
+  resendBtn.textContent = 'Sending...';
+
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/resend-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    
+    const data = await res.json();
+    
+    if (!res.ok) {
+      showMessage(data.error || 'Failed to resend code', true);
+    } else {
+      showMessage('New verification code sent to your email!', false);
+    }
+    
+  } catch (e) {
+    showMessage('Network error. Please try again.', true);
+  } finally {
+    resendBtn.disabled = false;
+    resendBtn.textContent = 'Resend Code';
+  }
+};
+
+// Allow Enter key to submit
+document.getElementById('verificationCode').addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    document.getElementById('verifyBtn').click();
+  }
+});
+
+// Auto-focus on code input
+document.getElementById('verificationCode').focus();
+</script>
+</body>
+</html>

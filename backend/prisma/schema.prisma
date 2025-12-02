@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String @id @default(uuid())
+  email        String @unique
+  passwordHash String
+  name         String
+  role         Role   @default(STUDENT)
+  
+  // Email verification fields
+  isEmailVerified         Boolean   @default(false)
+  verificationToken       String?
+  verificationTokenExpiry DateTime?
+  
+  // Password reset fields
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  houseId String?
+  house   House?  @relation(fields: [houseId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases  Purchase[]
+  activities ActivityLog[] @relation("ActivitySubject") // ✔ FIXED
+  eventParticipations EventParticipant[]
+  
+  // Teacher point change requests
+  pointChangeRequestsAsStudent  PointChangeRequest[] @relation("PCR_Student")
+  pointChangeRequestsAsTeacher  PointChangeRequest[] @relation("PCR_Teacher")
+  pointChangeRequestsAsReviewer PointChangeRequest[] @relation("PCR_Reviewer")
+}
+
+model House {
+  id       String  @id @default(uuid())
+  name     String  @unique
+  imageUrl String?
+
+  users     User[]
+  activity  ActivityLog[] @relation("ActivityHouse") // ✔ FIXED
+  purchases Purchase[]
+}
+
+model ActivityLog {
+  id        String @id @default(uuid())
+  subjectId String
+
+subject User @relation("ActivitySubject", fields: [subjectId], references: [id], onDelete: Cascade)
+  //                  ^ SAME relation name as User.activities
+
+  houseId String?
+  house   House?  @relation("ActivityHouse", fields: [houseId], references: [id])
+  //                  ^ SAME relation name as House.activity
+
+  amount      Int
+  reason      String
+  createdAt   DateTime @default(now())
+  performedBy String?
+}
+
+model ShopItem {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  price       Int
+  stock       Int?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  purchases Purchase[]
+}
+
+model Purchase {
+  id String @id @default(uuid())
+
+  buyerId String
+buyer   User   @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+
+  itemId String
+  item   ShopItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  houseId String
+  house   House  @relation(fields: [houseId], references: [id])
+
+  amount Int
+  qty    Int @default(1)
+
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  TEACHER
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PointChangeRequest {
+  id          String @id @default(uuid())
+
+
+  studentId   String
+  student     User   @relation("PCR_Student", fields: [studentId], references: [id], onDelete: Cascade)
+
+  teacherId   String
+  teacher     User   @relation("PCR_Teacher", fields: [teacherId], references: [id], onDelete: Cascade)
+
+  deltaPoints Int
+  reason      String
+
+  status      ApprovalStatus @default(PENDING)
+
+  createdAt   DateTime @default(now())
+  reviewedAt  DateTime?
+
+  reviewedBy  String?
+  reviewer    User?   @relation("PCR_Reviewer", fields: [reviewedBy], references: [id])
+
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([status])
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  eventDate   DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants EventParticipant[]
+}
+
+model EventParticipant {
+  id String @id @default(uuid())
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+}

@@ -1,0 +1,224 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Admin • Teacher Requests</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <style>
+    /* Page specific light tweaks (global system styles already in style.css) */
+    body { background: linear-gradient(135deg,#f8f9ff 0%, #ffffff 100%); }
+    .requests-header-spacer { margin-bottom:18px; }
+    .filter-toolbar { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    .filter-btn { padding:10px 16px; border-radius:10px; background:var(--primary); color:#fff; border:none; font-weight:700; cursor:pointer; font-size:14px; transition:.18s; box-shadow:0 2px 8px rgba(31,111,235,0.18); }
+    .filter-btn:hover { background:var(--primary-600); transform:translateY(-1px); }
+    .filter-btn.active { background:#fff; color:var(--primary-600); box-shadow:0 4px 14px rgba(31,111,235,0.25); border:2px solid var(--primary); }
+    .pill { display:inline-block; padding:6px 12px; border-radius:999px; font-weight:700; font-size:12px; }
+    .pill-add { background:#dcfce7; color:#16a34a; }
+    .pill-deduct { background:#fee2e2; color:#dc2626; }
+    /* Table actions: compress on small screens */
+    @media (max-width:700px){
+      .filter-toolbar { justify-content:flex-start; }
+      .filter-btn { flex:1 1 calc(50% - 10px); text-align:center; }
+    }
+    @media (max-width:480px){
+      .filter-btn { flex:1 1 100%; }
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="admin_home.html">Home</a>
+    <a href="admin_panel.html">Admin Panel</a>
+    <a href="admin_students.html">Students</a>
+    <a href="admin_houses.html">Manage Houses</a>
+    <a href="admin_events.html">Events</a>
+    <a href="admin_shop.html">Manage Shop</a>
+    <a href="admin_requests.html" class="active">Teacher Requests</a>
+    <a href="index.html" id="logoutMobile">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+<div class="app-shell">
+  <div class="main">
+    
+    <!-- Gradient page header (shared styling from global .header now) -->
+    <div class="header requests-header-spacer">
+      <div class="title">Teacher Point Requests</div>
+      <div class="controls">
+        <div class="avatar" id="avatar">A</div>
+      </div>
+    </div>
+
+    <!-- Filter toolbar card -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:4px">
+        <h3 style="margin:0;font-size:16px">Filters</h3>
+        <small style="color:var(--muted);font-size:12px">Tap a status to view matching requests</small>
+      </div>
+      <div class="filter-toolbar" id="filterToolbar">
+        <button class="filter-btn active" data-filter="PENDING">Pending</button>
+        <button class="filter-btn" data-filter="APPROVED">Approved</button>
+        <button class="filter-btn" data-filter="REJECTED">Rejected</button>
+        <button class="filter-btn" data-filter="">All</button>
+      </div>
+    </div>
+
+    <!-- Requests table card -->
+    <div class="card" style="margin-top:18px">
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Teacher</th>
+              <th>Student</th>
+              <th>Points</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="requestsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+// Auth check
+const token = localStorage.getItem('rc_token');
+if (!token) window.location = 'index.html';
+
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+
+document.getElementById('avatar').innerText = (localStorage.getItem('rc_name') || 'A')[0].toUpperCase();
+document.getElementById('logoutMobile')?.addEventListener('click', () => localStorage.clear());
+
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+let currentFilter = 'PENDING';
+
+async function loadRequests(status = 'PENDING') {
+  try {
+    const url = status ? `${API_BASE}/api/admin/point-change-requests?status=${status}` : `${API_BASE}/api/admin/point-change-requests`;
+    const res = await fetch(url, { headers: { Authorization: headers.Authorization } });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load requests');
+    renderRequests(data);
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+    if (/401|403/.test(String(err))) window.location = 'index.html';
+  }
+}
+
+function renderRequests(list) {
+  const body = document.getElementById('requestsBody');
+  body.innerHTML = '';
+
+  if (list.length === 0) {
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted)">No requests found</td></tr>';
+    return;
+  }
+
+  list.forEach(r => {
+    const pointsClass = r.deltaPoints >= 0 ? 'pill-add' : 'pill-deduct';
+    const pointsSign = r.deltaPoints > 0 ? '+' : '';
+    const isPending = r.status === 'PENDING';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="font-size:12px">${new Date(r.createdAt).toLocaleString()}</td>
+      <td style="font-weight:600">${escapeHtml(r.teacher?.name || '-')}</td>
+      <td style="font-weight:600">${escapeHtml(r.student?.name || '-')}</td>
+      <td><span class="pill ${pointsClass}">${pointsSign}${r.deltaPoints}</span></td>
+      <td>${escapeHtml(r.reason)}</td>
+      <td style="font-weight:700;color:${r.status === 'APPROVED' ? 'var(--success)' : r.status === 'REJECTED' ? 'var(--danger)' : '#d97706'}">${r.status}</td>
+      <td>
+        ${isPending ? `
+          <button class="btn" data-id="${r.id}" data-action="approve">Approve</button>
+          <button class="btn btn-danger" data-id="${r.id}" data-action="reject">Reject</button>
+        ` : '—'}
+      </td>
+    `;
+    
+    if (isPending) {
+      tr.querySelector('[data-action="approve"]')?.addEventListener('click', () => approveRequest(r.id));
+      tr.querySelector('[data-action="reject"]')?.addEventListener('click', () => rejectRequest(r.id));
+    }
+    
+    body.appendChild(tr);
+  });
+}
+
+async function approveRequest(id) {
+  if (!confirm('Approve this point change request?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/point-change-requests/${id}/approve`, {
+      method: 'POST',
+      headers
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to approve');
+    alert('Request approved successfully!');
+    loadRequests(currentFilter);
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+}
+
+async function rejectRequest(id) {
+  if (!confirm('Reject this point change request?')) return;
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/point-change-requests/${id}/reject`, {
+      method: 'POST',
+      headers
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to reject');
+    alert('Request rejected.');
+    loadRequests(currentFilter);
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// Filter buttons
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    loadRequests(currentFilter);
+  });
+});
+
+// Initial load
+loadRequests('PENDING');
+</script>
+
+</body>
+</html>

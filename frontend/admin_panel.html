@@ -1,0 +1,254 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Admin Panel</title>
+
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Layout & Shell */
+    body { background: linear-gradient(135deg,#f8f9ff 0%, #ffffff 100%); }
+    .app-shell { padding: 0 16px; }
+    .main { max-width: 1200px; margin: 24px auto; }
+
+    /* Header */
+    .header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:16px; background: linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); box-shadow: 0 12px 24px rgba(31,111,235,0.18); color:#fff; }
+    .header .title { font-size: 24px; font-weight: 800; letter-spacing: .5px; }
+    .header .avatar { width:40px; height:40px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; border:2px solid #ffffff55; }
+
+    /* Grid */
+    .grid { display:grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-top: 24px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    /* Cards */
+    .card { background: linear-gradient(135deg,#ffffff 0%, #f8f9ff 100%); border: 2px solid #e5e7ff; border-radius: 16px; padding: 20px; box-shadow: 0 10px 24px rgba(102,126,234,0.12); }
+    .card h3 { margin: 0 0 16px 0; color:#1a1a2e; font-size: 18px; font-weight: 800; }
+    .card h4 { margin: 8px 0 12px 0; color:#1a1a2e; font-size: 16px; font-weight: 700; }
+
+    /* Inputs */
+    input, textarea { width:100%; padding:12px 14px; border:2px solid #e5e7ff; border-radius:12px; font-size:14px; transition: all .2s; box-sizing:border-box; background:#fff; }
+    input:focus, textarea:focus { outline:none; border-color:#667eea; box-shadow: 0 0 0 4px rgba(102,126,234,.12); }
+    label { display:block; font-weight:700; color:#1a1a2e; margin:10px 0 6px; }
+
+    /* Buttons */
+    .btn { background: linear-gradient(135deg,var(--brand-2) 0%, var(--brand-1) 100%); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:800; letter-spacing:.4px; cursor:pointer; box-shadow:0 6px 16px rgba(31,111,235,.28); transition: all .2s; }
+    .btn:hover { transform: translateY(-2px); box-shadow:0 8px 20px rgba(31,111,235,.36); }
+    .btn-danger { background: linear-gradient(135deg,#f093fb 0%, #f5576c 100%); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:800; cursor:pointer; box-shadow:0 6px 16px rgba(245,87,108,.28); }
+    .btn-danger:hover { transform: translateY(-2px); box-shadow:0 8px 20px rgba(245,87,108,.36); }
+    .btn-quiet { background: #f3f4ff; color:#1a1a2e; border:none; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; transition: all .2s; }
+    .btn-quiet:hover { background:#e5e7ff; }
+
+    /* Inline control row override */
+    .control-row { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+    .control-row > * { flex: 1 1 180px; }
+    .control-row .btn, .control-row .btn-danger { flex: 0 0 auto; }
+
+    /* Table */
+    .table { width:100%; border-collapse: collapse; overflow:hidden; border-radius: 12px; border:2px solid #e5e7ff; }
+    .table thead { background:#f3f4ff; }
+    .table th { text-align:left; padding:12px; font-size:13px; color:#1a1a2e; font-weight:800; border-bottom:2px solid #e5e7ff; }
+    .table td { padding:12px; font-size:13px; color:#3a3a4e; border-bottom:1px solid #eef1ff; }
+    .table tbody tr:hover { background:#fafbff; }
+
+    /* Scroll areas */
+    #itemList, #purchases { background:#fff; border:2px solid #e5e7ff; border-radius:12px; padding:10px; box-shadow: 0 6px 16px rgba(102,126,234,.08); }
+
+    /* Autocomplete dropdown */
+    #searchResults div:hover { background:#f3f4ff; }
+  </style>
+</head>
+
+<body>
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="admin_home.html">Home</a>
+    <a href="admin_panel.html" class="active">Admin Panel</a>
+    <a href="admin_students.html">Students</a>
+    <a href="admin_houses.html">Manage Houses</a>
+    <a href="admin_events.html">Events</a>
+    <a href="admin_shop.html">Manage Shop</a>
+    <a href="admin_requests.html">Teacher Requests</a>
+    <a href="index.html" id="logoutLink">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+<div class="app-shell">
+
+  <!-- ======================== MAIN ======================== -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="title">Admin Panel</div>
+      <div class="controls">
+        <div class="avatar" id="avatar">A</div>
+      </div>
+    </div>
+
+    <div class="grid">
+
+      <!-- ======================================================
+           LEFT PANEL — RC Management & Activity Log
+      ====================================================== -->
+      <div class="col-8 card">
+
+        <h3>Manage Students / RC</h3>
+
+        <div class="control-row">
+          <div style="position:relative;flex:1">
+            <input id="studentSearch" placeholder="Search student by name">
+            <div id="searchResults" style="position:absolute;top:42px;left:0;right:0;background:white;border:1px solid var(--border);border-radius:10px;box-shadow:var(--shadow);display:none;z-index:10;max-height:220px;overflow:auto"></div>
+          </div>
+
+          <input id="studentId" type="hidden">
+          <input id="amount" type="number" placeholder="Amount">
+          <input id="reason" placeholder="Reason">
+
+          <button id="addBtn" class="btn">Add RC</button>
+          <button id="remBtn" class="btn-danger">Remove</button>
+        </div>
+
+        <h3 style="margin-top:18px;margin-bottom:10px">Activity Log</h3>
+
+        <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Date</th><th>Student</th><th>House</th><th>Amount</th><th>Reason</th></tr>
+          </thead>
+          <tbody id="activityBody"></tbody>
+        </table>
+        </div>
+
+      </div>
+
+      <!-- Right panel moved to separate Manage Shop page -->
+
+    </div>
+  </main>
+
+</div>
+
+
+<!-- ======================== SCRIPT ======================== -->
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+// =================== AUTH ===================
+const token = localStorage.getItem('rc_token');
+if (!token) location.href = 'index.html';
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+document.getElementById('logoutLink').onclick = () => localStorage.clear();
+
+// =================== AUTOCOMPLETE ===================
+const searchInput = document.getElementById('studentSearch');
+const results = document.getElementById('searchResults');
+const studentIdField = document.getElementById('studentId');
+
+searchInput.addEventListener('input', async () => {
+  const q = searchInput.value.trim();
+  if (q.length < 2) { results.style.display = 'none'; return; }
+
+  const r = await fetch(`${API_BASE}/api/admin/search-students?q=${q}`, { headers });
+  const data = await r.json();
+
+  results.innerHTML = '';
+  if (!data.length) { results.style.display = 'none'; return; }
+
+  data.forEach(s => {
+    const el = document.createElement('div');
+    el.style.padding = "10px";
+    el.style.cursor = "pointer";
+    el.innerHTML = `<strong>${s.name}</strong><div style="font-size:12px;color:#666">${s.house?.name || ''}</div>`;
+    el.onclick = () => {
+      searchInput.value = s.name;
+      studentIdField.value = s.id;
+      results.style.display = 'none';
+    };
+    results.appendChild(el);
+  });
+
+  results.style.display = 'block';
+});
+
+document.addEventListener('click', e => {
+  if (!searchInput.contains(e.target)) results.style.display = 'none';
+});
+
+// =================== ADD RC ===================
+document.getElementById('addBtn').onclick = async () => {
+  const studentId = studentIdField.value;
+  const amount = Number(document.getElementById('amount').value);
+  const reason = document.getElementById('reason').value.trim();
+
+  if (!studentId) return alert("Select student");
+  if (!amount) return alert("Enter amount");
+
+  const r = await fetch(`${API_BASE}/api/admin/add-rc`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ studentId, amount, reason })
+  });
+
+  const data = await r.json();
+  if (!r.ok) return alert(data.error || "Failed");
+
+  loadActivity();
+};
+
+// =================== REMOVE RC ===================
+document.getElementById('remBtn').onclick = async () => {
+  const studentId = studentIdField.value;
+  const amount = Number(document.getElementById('amount').value);
+  const reason = document.getElementById('reason').value.trim();
+
+  if (!studentId) return alert("Select student");
+  if (!amount) return alert("Enter amount");
+
+  const r = await fetch(`${API_BASE}/api/admin/remove-rc`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ studentId, amount, reason })
+  });
+
+  const data = await r.json();
+  if (!r.ok) return alert(data.error || "Failed");
+
+  loadActivity();
+};
+
+// =================== LOAD ACTIVITY ===================
+async function loadActivity() {
+  const r = await fetch(`${API_BASE}/api/admin/activity-log`, { headers });
+  const logs = await r.json();
+  const tbody = document.getElementById('activityBody');
+  tbody.innerHTML = "";
+
+  logs.forEach(l => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${new Date(l.createdAt).toLocaleString()}</td>
+      <td>${l.subject?.name}</td>
+      <td>${l.house?.name}</td>
+      <td>${l.amount}</td>
+      <td>${l.reason}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Init
+loadActivity();
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Signup</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="gradient-bg">
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="signup.html">Student Signup</a>
+    <a href="admin_signup.html">Admin Signup</a>
+    <a href="teacher_signup.html">Teacher Signup</a>
+        <a href="index.html">Login</a>
+
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+</nav>
+  <main style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:28px">
+    <div style="max-width:520px;width:100%">
+      <div class="card">
+        <div style="display:flex;gap:12px;align-items:center">
+          <!-- <img src="assets/logo.png" style="width:56px;height:56px;border-radius:8px"> -->
+          <div>
+            <h3 style="margin-bottom:4px;color:var(--primary-600)">Create Student Account</h3>
+            <div style="color:var(--muted)">Join your house and start earning RC</div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <label>Name</label><input id="name" placeholder="Full name">
+          <label>Email</label><input id="email" placeholder="school email">
+          <label>Password</label><input id="password" type="password" placeholder="password">
+          <label>House</label>
+          <select id="houseName">
+            <option>Aydahar</option>
+            <option>Kök-Börü</option>
+            <option>Pyrak</option>
+            <option>Samuryk</option>
+          </select>
+
+          <div style="display:flex;gap:10px;margin-top:12px">
+            <button class="buy-btn" id="signupBtn">Sign up</button>
+            <a href="index.html" style="align-self:center;color:var(--muted)">Back to login</a>
+          </div>
+          <p id="msg" style="color:var(--danger);margin-top:8px"></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script src="config.js"></script>
+<script>
+document.getElementById('signupBtn').onclick = async () => {
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const houseName = document.getElementById('houseName').value;
+  const msg = document.getElementById('msg');
+  if(!name||!email||!password){ msg.textContent='All fields required'; return }
+  
+  const signupBtn = document.getElementById('signupBtn');
+  signupBtn.disabled = true;
+  signupBtn.textContent = 'Creating account...';
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/signup`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name,email,password,houseName})
+    });
+    const data = await res.json();
+    if(!res.ok){ 
+      msg.textContent = data.error || JSON.stringify(data); 
+      signupBtn.disabled = false;
+      signupBtn.textContent = 'Sign up';
+      return;
+    }
+    
+    // Redirect to verification page
+    if (data.needsVerification) {
+      alert('Account created! Please check your email for verification code.');
+      location.href = `verify_email.html?email=${encodeURIComponent(email)}`;
+    } else {
+      alert('Signup success — login now');
+      location.href='index.html';
+    }
+  } catch(e){ 
+    msg.textContent='Network error';
+    signupBtn.disabled = false;
+    signupBtn.textContent = 'Sign up';
+  }
+};
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Secure Signup</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="gradient-bg">
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <button class="navbar-toggle" id="navToggle">☰ Menu</button>
+  <div class="navbar-links">
+    <a href="signup.html">Student Signup</a>
+    <a href="admin_signup.html">Admin Signup</a>
+    <a href="teacher_signup.html">Teacher Signup</a>
+    <a href="index.html">Login</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+</nav>
+  <main style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:28px">
+    <div style="max-width:480px;width:100%">
+      <div class="card" style="text-align:center">
+        <img src="assets/logo.jpg" style="width:140px;margin:0 auto 12px;display:block">
+        <h3 style="color:var(--primary-600)">Create Admin Account</h3>
+        <div style="color:var(--muted);margin-bottom:12px">Enter admin secret key to create your account</div>
+
+        <label>Name</label><input id="name" placeholder="Admin name">
+        <label>Email</label><input id="email" placeholder="school email">
+        <label>Password</label><input id="password" type="password">
+        <label>Admin Secret Key</label><input id="secret" type="password">
+
+        <button class="buy-btn" id="createBtn" style="margin-top:12px">Create Admin Account</button>
+        <p id="msg" style="color:var(--danger);margin-top:8px"></p>
+      </div>
+    </div>
+  </main>
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+
+document.getElementById('createBtn').onclick = async () => {
+  const name = document.getElementById('name').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const secret = document.getElementById('secret').value.trim();
+  const msg = document.getElementById('msg');
+  if(!name||!email||!password||!secret){ msg.textContent='All fields required'; return }
+  
+  const createBtn = document.getElementById('createBtn');
+  createBtn.disabled = true;
+  createBtn.textContent = 'Creating account...';
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/admin/secure-signup`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({name, email, password, secret})
+    });
+    const data = await res.json();
+    if(!res.ok){ 
+      msg.textContent = data.error || JSON.stringify(data); 
+      createBtn.disabled = false;
+      createBtn.textContent = 'Create Admin Account';
+      return;
+    }
+    
+    // Redirect to verification page
+    if (data.needsVerification) {
+      msg.style.color='green'; 
+      msg.textContent='Account created! Check your email for verification code.';
+      setTimeout(() => location.href = `verify_email.html?email=${encodeURIComponent(email)}`, 1500);
+    } else {
+      msg.style.color='green'; msg.textContent='Admin account created — redirecting...';
+      setTimeout(()=>location.href='index.html',1200);
+    }
+  } catch(e){ 
+    msg.textContent='Network error';
+    createBtn.disabled = false;
+    createBtn.textContent = 'Create Admin Account';
+  }
+};
+</script>
+</body>
+</html>

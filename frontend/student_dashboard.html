@@ -1,0 +1,169 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RIS Coins — Student Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Admin-style gradient header for consistency */
+    .header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:16px; background: linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); box-shadow: 0 12px 24px rgba(31,111,235,0.18); color:#fff; }
+    .header .title { font-size: 22px; font-weight: 800; letter-spacing:.4px; }
+    .header .avatar { width:40px; height:40px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; border:2px solid #ffffff55; }
+  </style>
+</head>
+
+
+<body>
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="student_home.html">Home</a>
+    <a href="student_dashboard.html" class="active">Dashboard</a>
+    <a href="shop.html">Shop</a>
+    <a href="student_activity.html">Activities</a>
+    <a href="student_events.html">Events</a>
+    <a href="index.html" id="logoutLink">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+<div class="app-shell">
+
+  <!-- ==============================
+       MAIN
+  =============================== -->
+  <div class="main">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="title">Student Dashboard</div>
+      <div class="controls">
+        <div class="avatar" id="avatar">S</div>
+      </div>
+    </div>
+
+    <!-- ==============================
+         DASHBOARD CONTENT
+    =============================== -->
+    <div class="grid">
+
+      <!-- POINTS -->
+      <div class="col-4 card">
+        <h3>Your Points</h3>
+        <div class="points" style="margin-top:10px">
+          <div class="value" id="pointsValue">0</div>
+          <div class="meta">RIS Coins (RC)</div>
+        </div>
+      </div>
+
+      <!-- HOUSE -->
+      <div class="col-4 card">
+        <h3>Your House</h3>
+        <div style="font-size:20px;font-weight:700;color:var(--primary-600);margin-top:10px;" id="houseName">
+          Loading...
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="col-4 card">
+        <h3>Your Profile</h3>
+        <div style="margin-top:12px;font-weight:600" id="studentName">Loading...</div>
+        <div style="color:var(--muted)" id="studentEmail"></div>
+      </div>
+
+      <!-- RECENT ACTIVITY -->
+      <div class="col-12 card">
+        <h3>Recent Activity</h3>
+
+        <div class="table-wrap">
+        <table class="table" style="margin-top:12px">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Reason</th>
+            </tr>
+          </thead>
+          <tbody id="activityBody"></tbody>
+        </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+/* AUTH CHECK */
+const token = localStorage.getItem("rc_token");
+if (!token) window.location = "index.html";
+
+document.getElementById("logoutLink").onclick = () => {
+  localStorage.clear();
+};
+
+/* Avatar */
+document.getElementById("avatar").innerText =
+  (localStorage.getItem("rc_name") || "S")[0].toUpperCase();
+
+/* LOAD DASHBOARD DATA */
+async function loadDashboard() {
+  const headers = { "Authorization": `Bearer ${token}` };
+
+  try {
+    // MATCH YOUR BACKEND ROUTES
+    const r1 = await fetch(`${API_BASE}/api/students/me`, { headers });
+    const r2 = await fetch(`${API_BASE}/api/students/my-points`, { headers });
+    const r3 = await fetch(`${API_BASE}/api/students/activity`, { headers });
+
+    const profile = await r1.json();
+    const points = await r2.json();
+    const activity = await r3.json();
+
+    // FILL UI
+    document.getElementById("studentName").textContent = profile.name;
+    document.getElementById("studentEmail").textContent = profile.email;
+
+    document.getElementById("houseName").textContent =
+      profile.house?.name || "—";
+
+    document.getElementById("pointsValue").textContent =
+      points.points ?? 0;
+
+    // Activity rows
+    const body = document.getElementById("activityBody");
+    body.innerHTML = "";
+
+    activity.forEach(a => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${new Date(a.createdAt).toLocaleString()}</td>
+        <td style="font-weight:700;color:${a.amount >= 0 ? "var(--success)" : "var(--danger)"}">
+          ${a.amount}
+        </td>
+        <td>${a.reason}</td>
+      `;
+      body.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+loadDashboard();
+</script>
+
+</body>
+</html>

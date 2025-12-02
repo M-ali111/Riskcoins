@@ -1,0 +1,437 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Events</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Admin-style gradient header */
+    .header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:16px; background: linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); box-shadow: 0 12px 24px rgba(31,111,235,0.18); color:#fff; }
+    .header .title { font-size: 22px; font-weight: 800; }
+    .header .avatar { width:40px; height:40px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; border:2px solid #ffffff55; }
+    .calendar-view {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+      margin-top: 24px;
+    }
+    .event-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+      border: 2px solid #e5e7ff;
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .event-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .event-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 28px rgba(102, 126, 234, 0.2);
+      border-color: #667eea;
+    }
+    .event-card:hover::before {
+      opacity: 1;
+    }
+    .event-card.joined {
+      border: 2px solid #10b981;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15);
+    }
+    .event-card.joined::before {
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+      opacity: 1;
+    }
+    .event-date {
+      font-size: 13px;
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .event-card.joined .event-date {
+      color: #059669;
+    }
+    .event-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #1a1a2e;
+      line-height: 1.3;
+      padding-right: 100px;
+    }
+    .event-description {
+      font-size: 14px;
+      color: #5a5a6e;
+      margin-bottom: 16px;
+      line-height: 1.6;
+      min-height: 48px;
+    }
+    .event-participants {
+      font-size: 13px;
+      color: #764ba2;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      background: #f3f0ff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      width: fit-content;
+    }
+    .event-card.joined .event-participants {
+      background: #d1fae5;
+      color: #059669;
+    }
+    .event-status {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .event-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .event-actions button {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .btn-join {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+    .btn-join:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+    .btn-leave {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
+    }
+    .btn-leave:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(245, 87, 108, 0.4);
+    }
+    .btn-join:disabled,
+    .btn-leave:disabled {
+      background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    .btn-join:active:not(:disabled),
+    .btn-leave:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .no-events {
+      grid-column: 1/-1;
+      text-align: center;
+      padding: 60px 40px;
+      color: #9ca3af;
+      font-size: 16px;
+      background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+      border: 2px dashed #e5e7ff;
+      border-radius: 16px;
+    }
+    .page-header {
+      margin-bottom: 24px;
+    }
+    .page-header h2 {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0 0 8px 0;
+    }
+    .page-header p {
+      color: #5a5a6e;
+      margin: 0;
+      font-size: 15px;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: #f8f9ff;
+      padding: 6px;
+      border-radius: 12px;
+      width: fit-content;
+    }
+    .filter-tab {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #5a5a6e;
+      border-radius: 8px;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .filter-tab:hover {
+      color: #667eea;
+      background: rgba(102, 126, 234, 0.1);
+    }
+    .filter-tab.active {
+      color: white;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+  </style>
+</head>
+
+<body>
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="student_home.html">Home</a>
+    <a href="student_dashboard.html">Dashboard</a>
+    <a href="shop.html">Shop</a>
+    <a href="student_activity.html">Activities</a>
+    <a href="student_events.html" class="active">Events</a>
+    <a href="index.html" id="logoutLink">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+<div class="app-shell">
+  <main class="main">
+    <div class="header">
+      <div class="title">Events</div>
+      <div class="controls">
+        <div class="avatar" id="avatar">S</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding: 20px;">
+      <div class="page-header">
+        <h2>📅 Upcoming Events</h2>
+        <p>Join events to participate and earn rewards!</p>
+      </div>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterEvents('all')">All Events</button>
+        <button class="filter-tab" onclick="filterEvents('joined')">My Events</button>
+        <button class="filter-tab" onclick="filterEvents('available')">Available</button>
+      </div>
+      
+      <div id="eventsContainer" class="calendar-view">
+        <div class="no-events">Loading events...</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+  const token = localStorage.getItem('rc_token');
+  if (!token) {
+    window.location.href = 'index.html';
+  }
+
+  let allEvents = [];
+  let currentFilter = 'all';
+
+  // Logout
+  document.getElementById('logoutLink').addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.clear();
+    window.location.href = 'index.html';
+  });
+
+  // Load events
+  async function loadEvents() {
+    try {
+      const response = await fetch(`${API_BASE}/api/events`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) throw new Error('Failed to load events');
+      
+      allEvents = await response.json();
+      displayEvents(allEvents);
+    } catch (error) {
+      console.error('Error loading events:', error);
+      document.getElementById('eventsContainer').innerHTML = 
+        '<div class="no-events">Failed to load events. Please try again later.</div>';
+    }
+  }
+
+  // Filter events
+  function filterEvents(filter) {
+    currentFilter = filter;
+    
+    // Update active tab
+    document.querySelectorAll('.filter-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    let filtered = allEvents;
+    if (filter === 'joined') {
+      filtered = allEvents.filter(e => e.hasJoined);
+    } else if (filter === 'available') {
+      filtered = allEvents.filter(e => !e.hasJoined);
+    }
+    
+    displayEvents(filtered);
+  }
+
+  // Display events
+  function displayEvents(events) {
+    const container = document.getElementById('eventsContainer');
+    
+    if (events.length === 0) {
+      const message = currentFilter === 'joined' 
+        ? "You haven't joined any events yet."
+        : currentFilter === 'available'
+        ? "No available events at the moment."
+        : "No events scheduled yet.";
+      container.innerHTML = `<div class="no-events">${message}</div>`;
+      return;
+    }
+
+    container.innerHTML = events.map(event => {
+      const eventDate = new Date(event.eventDate);
+      const now = new Date();
+      const isPast = eventDate < now;
+      
+      const formattedDate = eventDate.toLocaleString('en-US', {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      const joinedBadge = event.hasJoined 
+        ? '<div class="event-status">✓ Joined</div>' 
+        : '';
+      
+      const actionButton = event.hasJoined
+        ? `<button class="btn-leave" onclick="leaveEvent('${event.id}')" ${isPast ? 'disabled' : ''}>
+             ${isPast ? 'Event Ended' : 'Leave Event'}
+           </button>`
+        : `<button class="btn-join" onclick="joinEvent('${event.id}')" ${isPast ? 'disabled' : ''}>
+             ${isPast ? 'Event Ended' : 'Join Event'}
+           </button>`;
+      
+      return `
+        <div class="event-card ${event.hasJoined ? 'joined' : ''}">
+          ${joinedBadge}
+          <div class="event-date">📅 ${formattedDate}</div>
+          <div class="event-title">${escapeHtml(event.title)}</div>
+          <div class="event-description">${escapeHtml(event.description || 'No description provided')}</div>
+          <div class="event-participants">👥 ${event._count.participants} participant(s) joined</div>
+          <div class="event-actions">
+            ${actionButton}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Join event
+  async function joinEvent(id) {
+    try {
+      const response = await fetch(`${API_BASE}/api/events/${id}/join`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to join event');
+      }
+      
+      alert('Successfully joined the event! 🎉');
+      loadEvents();
+    } catch (error) {
+      console.error('Error joining event:', error);
+      alert(error.message || 'Failed to join event');
+    }
+  }
+
+  // Leave event
+  async function leaveEvent(id) {
+    if (!confirm('Are you sure you want to leave this event?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE}/api/events/${id}/leave`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to leave event');
+      }
+      
+      alert('You have left the event.');
+      loadEvents();
+    } catch (error) {
+      console.error('Error leaving event:', error);
+      alert(error.message || 'Failed to leave event');
+    }
+  }
+
+  // Escape HTML
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Load events on page load
+  loadEvents();
+</script>
+
+</body>
+</html>
+

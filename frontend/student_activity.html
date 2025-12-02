@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Activity — RIS Coins</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* Admin-style gradient header */
+  .header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:16px; background: linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); box-shadow: 0 12px 24px rgba(31,111,235,0.18); color:#fff; }
+  .header .title { font-size: 22px; font-weight: 800; }
+  .header .avatar { width:40px; height:40px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; border:2px solid #ffffff55; }
+</style>
+</head>
+
+<body>
+<link rel="stylesheet" href="css/navbar.css">
+
+<!-- ======================== NAVBAR ======================== -->
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="student_home.html">Home</a>
+    <a href="student_dashboard.html">Dashboard</a>
+    <a href="shop.html">Shop</a>
+    <a href="student_activity.html" class="active">Activities</a>
+    <a href="student_events.html">Events</a>
+    <a href="index.html" id="logoutLink">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+
+
+  <main class="main">
+    <div class="header">
+      <div class="title">My Activity</div>
+      <div class="avatar" id="avatar">S</div>
+    </div>
+
+    <div class="grid">
+      <div class="col-12 card">
+        <h3>Your RIS Coins History</h3>
+        <p style="color:var(--muted);margin-bottom:16px">All your earned and spent RIS Coins</p>
+
+        <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Reason</th>
+              <th>Balance</th>
+            </tr>
+          </thead>
+          <tbody id="activityBody">
+            <tr><td colspan="4" style="text-align:center;color:var(--muted)">Loading...</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+const token = localStorage.getItem("rc_token");
+if(!token) location.href = "index.html";
+
+document.getElementById("logoutLink").onclick = () => localStorage.clear();
+
+async function loadActivity() {
+  const headers = { Authorization: `Bearer ${token}` };
+  
+  try {
+    const [activityRes, pointsRes] = await Promise.all([
+      fetch(`${API_BASE}/api/students/activity`, { headers }),
+      fetch(`${API_BASE}/api/students/my-points`, { headers })
+    ]);
+
+    const activity = await activityRes.json();
+    const points = await pointsRes.json();
+
+    const body = document.getElementById("activityBody");
+    body.innerHTML = "";
+
+    if (activity.length === 0) {
+      body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">No activity yet</td></tr>';
+      return;
+    }
+
+    // Calculate running balance
+    let balance = 0;
+    const sorted = activity.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    
+    sorted.forEach(a => {
+      balance += a.amount;
+      const tr = document.createElement("tr");
+      const color = a.amount >= 0 ? "var(--success)" : "var(--danger)";
+      const sign = a.amount >= 0 ? "+" : "";
+      
+      tr.innerHTML = `
+        <td>${new Date(a.createdAt).toLocaleString()}</td>
+        <td style="font-weight:700;color:${color}">${sign}${a.amount}</td>
+        <td>${a.reason}</td>
+        <td style="font-weight:600">${balance} RC</td>
+      `;
+      body.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById("activityBody").innerHTML = 
+      '<tr><td colspan="4" style="text-align:center;color:var(--danger)">Failed to load activity</td></tr>';
+  }
+}
+
+loadActivity();
+</script>
+
+</body>
+</html>

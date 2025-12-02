@@ -1,0 +1,178 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>RIS Coins — Manage Shop</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/navbar.css">
+  <style>
+    body { background: linear-gradient(135deg,#f8f9ff 0%, #ffffff 100%); }
+    .main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+    .header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-radius:16px; background: linear-gradient(92deg, var(--brand-2), var(--brand-1) 60%, var(--brand-accent)); box-shadow: 0 12px 24px rgba(31,111,235,0.18); color:#fff; }
+    .header .title { font-size: 22px; font-weight: 800; }
+    .header .avatar { width:40px; height:40px; border-radius:50%; background:#ffffff22; display:flex; align-items:center; justify-content:center; font-weight:700; color:#fff; border:2px solid #ffffff55; }
+
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+    @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+    .card { background: linear-gradient(135deg,#ffffff 0%, #f8f9ff 100%); border: 2px solid #e5e7ff; border-radius: 16px; padding: 20px; box-shadow: 0 10px 24px rgba(102,126,234,0.12); }
+    label { display:block; font-weight:700; color:#1a1a2e; margin:10px 0 6px; }
+    input, textarea { width:100%; padding:12px 14px; border:2px solid #e5e7ff; border-radius:12px; font-size:14px; transition: all .2s; box-sizing:border-box; background:#fff; }
+    input:focus, textarea:focus { outline:none; border-color:#4facfe; box-shadow: 0 0 0 4px rgba(79,172,254,.12); }
+
+    .btn { background: linear-gradient(135deg,var(--brand-2) 0%, var(--brand-1) 100%); color:#fff; border:none; border-radius:12px; padding:12px 16px; font-weight:800; letter-spacing:.4px; cursor:pointer; box-shadow:0 6px 16px rgba(31,111,235,.28); transition: all .2s; }
+    .btn:hover { transform: translateY(-2px); box-shadow:0 8px 20px rgba(31,111,235,.36); }
+    .btn-quiet{background:#f3f4ff;border:none;padding:10px 14px;border-radius:10px;cursor:pointer;font-weight:700}
+    .btn-quiet:hover{background:#e5e7ff}
+
+    #itemList, #purchases { background:#fff; border:2px solid #e5e7ff; border-radius:12px; padding:10px; box-shadow: 0 6px 16px rgba(102,126,234,.08); max-height:260px; overflow:auto; }
+  </style>
+</head>
+<body>
+<nav class="riskcoins-navbar">
+  <div class="navbar-links">
+    <a href="admin_home.html">Home</a>
+    <a href="admin_panel.html">Admin Panel</a>
+    <a href="admin_students.html">Students</a>
+    <a href="admin_houses.html">Manage Houses</a>
+    <a href="admin_events.html">Events</a>
+    <a href="admin_shop.html" class="active">Manage Shop</a>
+    <a href="index.html" id="logoutLink">Logout</a>
+  </div>
+  <img src="assets/logo.jpg" alt="RIS Coins Logo" class="navbar-logo">
+  <button class="navbar-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+</nav>
+
+<div class="main">
+  <div class="header">
+    <div class="title">Manage Shop</div>
+    <div class="controls"><div class="avatar" id="avatar">A</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h3>Create Item</h3>
+      <label>Image</label>
+      <input type="file" id="itemImage" accept="image/*">
+      <label>Title</label>
+      <input id="itemTitle">
+      <label>Price</label>
+      <input id="itemPrice">
+      <label>Stock (empty = unlimited)</label>
+      <input id="itemStock">
+      <label>Description</label>
+      <textarea id="itemDesc"></textarea>
+      <button id="createItemBtn" class="btn" style="margin-top:10px;">Create Item</button>
+    </div>
+
+    <div class="card">
+      <h3>Recent Purchases</h3>
+      <div id="purchases"></div>
+
+      <h3 style="margin-top:16px">Manage Items</h3>
+      <div id="itemList"></div>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+// Mobile navbar toggle
+document.getElementById('navToggle')?.addEventListener('click', () => {
+  document.querySelector('.riskcoins-navbar')?.classList.toggle('open');
+});
+const token = localStorage.getItem('rc_token');
+if (!token) location.href = 'index.html';
+const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+document.getElementById('logoutLink').onclick = () => localStorage.clear();
+
+// =================== LOAD PURCHASES ===================
+async function loadPurchases() {
+  const r = await fetch(`${API_BASE}/api/admin/purchases`, { headers });
+  const data = await r.json();
+  const div = document.getElementById('purchases');
+  div.innerHTML = '';
+
+  data.forEach(p => {
+    const el = document.createElement('div');
+    el.textContent = `${new Date(p.createdAt).toLocaleString()} — ${p.buyer?.name} bought ${p.item?.title} (${p.amount} RC)`;
+    div.appendChild(el);
+  });
+}
+
+// =================== SHOP ITEMS ===================
+async function loadItems() {
+  const r = await fetch(`${API_BASE}/api/admin/items`, { headers });
+  const items = await r.json();
+
+  const box = document.getElementById('itemList');
+  box.innerHTML = '';
+
+  items.forEach(i => {
+    const imgUrl = i.imageUrl
+      ? (i.imageUrl.startsWith('/uploads/') ? `${API_BASE}/api${i.imageUrl}` : `${API_BASE}${i.imageUrl}`)
+      : 'assets/logo.jpg';
+    const div = document.createElement('div');
+    div.style.padding = '6px 0';
+    div.style.borderBottom = '1px solid #eee';
+
+    div.innerHTML = `
+      <div style="display:flex;gap:10px;align-items:center">
+        <img src="${imgUrl}" style="width:60px;height:60px;border-radius:8px;object-fit:cover" onerror="this.onerror=null;this.src='assets/logo.jpg'">
+        <div style="flex:1">
+          <strong>${i.title}</strong><br>
+          <span style="font-size:12px;color:#666">${i.price} RC • ${i.stock ?? "∞"}</span>
+        </div>
+        <button class="btn-quiet" onclick="deleteItem('${i.id}')">Delete</button>
+      </div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+// DELETE ITEM
+async function deleteItem(id) {
+  if (!confirm("Delete item?")) return;
+  const res = await fetch(`${API_BASE}/api/admin/items/${id}`, { method: 'DELETE', headers });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({error:'Delete failed'}));
+    alert(err.error || 'Delete failed');
+    return;
+  }
+  loadItems();
+}
+
+// CREATE ITEM
+const createBtn = document.getElementById('createItemBtn');
+createBtn.onclick = async () => {
+  const title = document.getElementById('itemTitle').value.trim();
+  const price = Number(document.getElementById('itemPrice').value);
+  const stockValue = document.getElementById('itemStock').value;
+  const stock = stockValue === '' ? null : Number(stockValue);
+  const desc = document.getElementById('itemDesc').value.trim();
+  const file = document.getElementById('itemImage').files[0];
+
+  if (!title || !price) { alert('Title and price required'); return; }
+
+  const fd = new FormData();
+  if (file) fd.append('image', file);
+  fd.append('title', title);
+  fd.append('price', price);
+  if (stock !== null) fd.append('stock', stock);
+  if (desc) fd.append('description', desc);
+
+  const r = await fetch(`${API_BASE}/api/admin/items`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` }, body: fd });
+  if (!r.ok) { alert('Create failed'); return; }
+  alert('Item created');
+  loadItems();
+};
+
+// Init
+loadPurchases();
+loadItems();
+</script>
+</body>
+</html>
