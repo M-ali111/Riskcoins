@@ -10,14 +10,20 @@ yarn.lock
 *.env
 
 # Uploads and media
+# Keep user-uploaded or bulk media out of git, but allow specific UI assets.
 uploads/
-*.jpg
-*.jpeg
-*.png
-*.gif
-*.pdf
+backend/uploads/
+frontend/assets/houses/
+
+# Allow frontend UI assets (logos/icons) to be tracked.
+!frontend/assets/logo.jpg
+!frontend/assets/*.png
+!frontend/assets/*.svg
+
+# Large binary/media types still generally ignored except explicit exceptions above.
 *.mp4
 *.avi
+*.pdf
 
 # Logs
 logs/
