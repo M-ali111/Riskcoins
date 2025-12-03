@@ -162,17 +162,17 @@
     width: 100%;
     border-radius: 8px;
     text-align: left;
-    background: rgba(255, 255, 255, 0.95);
-    color: var(--brand-2);
+    background: var(--brand-2);
+    color: #fff;
     font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   }
   
   .riskcoins-navbar .navbar-links a:hover,
   .riskcoins-navbar .navbar-links a.active {
-    background: #fff;
-    color: var(--brand-2);
-    box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+    background: var(--brand-1);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(31, 111, 235, 0.4);
     transform: translateX(4px);
   }
 }
