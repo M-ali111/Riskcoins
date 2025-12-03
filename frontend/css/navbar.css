@@ -94,7 +94,10 @@
 /* Mobile menu - hide links by default, show toggle */
 @media (max-width: 900px) {
   .riskcoins-navbar {
+    display: flex;
+    flex-direction: row;
     flex-wrap: wrap;
+    align-items: center;
     justify-content: space-between;
     padding: 8px 12px;
     min-height: 56px;
@@ -102,47 +105,53 @@
     margin-bottom: 20px;
   }
   
-  /* Show toggle button on mobile - left side, stays in top row */
+  /* Toggle button - far left in first row */
   .navbar-toggle {
     display: block;
     order: 1;
     font-size: 20px;
     padding: 8px 12px;
-    margin: 4px 0;
-    flex: 0 0 auto;
+    margin: 0;
+    background: #fff;
+    color: var(--brand-2);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
   }
   
   .navbar-toggle:hover {
     box-shadow: 0 4px 12px rgba(46,87,255,0.2);
   }
   
-  /* Logo on far right corner - stays in top row */
-  .riskcoins-navbar .navbar-logo {
-    order: 2;
-    height: 42px;
-    margin: 4px 0;
-    flex: 0 0 auto;
-  }
-  
-  /* Links dropdown - hidden by default, takes full width in new row */
+  /* Links - hidden, will appear in second row below */
   .riskcoins-navbar .navbar-links {
     order: 3;
     flex-basis: 100%;
     width: 100%;
+    display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 4px;
     margin: 0;
+    margin-top: 0;
     max-height: 0;
     overflow: hidden;
     opacity: 0;
-    transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease;
+    transition: max-height 0.35s ease, opacity 0.35s ease, margin-top 0.35s ease;
   }
   
-  /* When menu is open */
+  /* Logo - far right in first row */
+  .riskcoins-navbar .navbar-logo {
+    order: 2;
+    height: 42px;
+    margin: 0;
+    margin-left: auto;
+  }
+  
+  /* When menu is open - dropdown appears */
   .riskcoins-navbar.open .navbar-links {
     max-height: 500px;
     opacity: 1;
-    margin-top: 12px;
+    margin-top: 16px;
   }
   
   .riskcoins-navbar .navbar-links a {
@@ -150,7 +159,7 @@
     padding: 12px 16px;
     width: 100%;
     border-radius: 8px;
-    margin-bottom: 4px;
+    text-align: left;
   }
 }
 
