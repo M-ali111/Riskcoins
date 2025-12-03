@@ -17,7 +17,7 @@
   border-radius: 0 0 18px 18px;
   margin-bottom: 32px;
   position: relative;
-  z-index: 10;
+  z-index: 100;
   flex-wrap: nowrap; /* keep single row on desktop */
 }
 
