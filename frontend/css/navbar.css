@@ -101,24 +101,26 @@
     margin-bottom: 20px;
   }
   
-  /* Show toggle button on mobile */
+  /* Show toggle button on mobile - left side */
   .navbar-toggle {
     display: block;
     order: 1;
     font-size: 20px;
     padding: 8px 12px;
     margin: 4px 0;
+    margin-right: auto;
   }
   
   .navbar-toggle:hover {
     box-shadow: 0 4px 12px rgba(46,87,255,0.2);
   }
   
-  /* Logo stays on right */
+  /* Logo on far right corner */
   .riskcoins-navbar .navbar-logo {
     order: 2;
     height: 42px;
-    margin: 4px 0 4px auto;
+    margin: 4px 0;
+    margin-left: auto;
   }
   
   /* Links dropdown - hidden by default */
