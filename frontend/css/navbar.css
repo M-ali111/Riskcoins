@@ -21,23 +21,18 @@
   flex-wrap: nowrap; /* keep single row on desktop */
 }
 
-/* Desktop: toggle is hidden, logo in middle, links on right */
-.navbar-toggle {
-  order: 1;
-}
 
 .riskcoins-navbar .navbar-logo {
   height: 54px;
   width: auto;
   object-fit: contain;
-  margin-left: auto;
-  margin-right: auto;
+  margin-left: 32px;
+  margin-right: 0;
   box-shadow: 0 2px 8px 0 rgba(46,87,255,0.10);
   border-radius: 12px;
   background: #fff;
   padding: 4px 10px;
   transition: box-shadow 0.2s;
-  order: 2;
 }
 
 .riskcoins-navbar .navbar-logo:hover {
@@ -50,8 +45,8 @@
   flex-direction: row;
   gap: 28px;
   margin: 0;
-  margin-right: 18px;
-  order: 3;
+  margin-left: 18px;
+  flex: 1; /* consume space so logo stays visible */
 }
 
 
@@ -101,7 +96,7 @@
 @media (max-width: 900px) {
   .riskcoins-navbar {
     display: grid;
-    grid-template-columns: auto 1fr; /* toggle left, logo right */
+    grid-template-columns: 1fr auto; /* toggle left, logo right */
     grid-template-rows: 54px auto;   /* top bar + dropdown row */
     align-items: center;
     padding: 6px 10px;
@@ -117,7 +112,6 @@
     background: #fff; /* ensure readable on gradient */
     padding: 6px 10px;
     border-radius: 10px;
-    grid-column: 1;
     grid-row: 1; /* stay on header row */
     transition: all 0.2s ease;
   }
@@ -129,7 +123,6 @@
     height: 40px;
     margin: 8px 6px;
     justify-self: end;
-    grid-column: 2;
     grid-row: 1; /* stay on header row */
   }
   .riskcoins-navbar .navbar-links {
@@ -183,6 +176,19 @@
     padding: 10px 12px;
   }
 }
+
+/* Place logo at right for desktop */
+.riskcoins-navbar .navbar-links {
+  order: 1;
+}
+.riskcoins-navbar .navbar-logo {
+  order: 2;
+  margin-left: auto;
+}
+
+/* Smooth dropdown animation for mobile */
+.riskcoins-navbar .navbar-links { transition: all .2s ease; }
+.riskcoins-navbar.open .navbar-links { opacity: 1; }
 /* ============================================================
    Tablet (portrait/landscape) adjustments: 600px–1100px
    Reduce link spacing and font size so logo + links fit.
