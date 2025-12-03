@@ -95,62 +95,81 @@
 /* Tablets and below - responsive mobile menu */
 @media (max-width: 900px) {
   .riskcoins-navbar {
-    display: grid;
-    grid-template-columns: 1fr auto; /* toggle left, logo right */
-    grid-template-rows: 54px auto;   /* top bar + dropdown row */
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     padding: 6px 10px;
     min-height: 54px;
-    border-radius: 0 0 12px 12px; /* smaller rounding on mobile */
-    margin-bottom: 16px; /* tighten spacing under navbar */
+    border-radius: 0 0 12px 12px;
+    margin-bottom: 16px;
   }
+  
+  /* Top row with toggle and logo */
+  .riskcoins-navbar::before {
+    content: '';
+    display: flex;
+    order: -1;
+  }
+  
   .navbar-toggle {
     display: inline-block;
     margin: 8px 6px;
     font-size: 18px;
-    justify-self: start;
-    background: #fff; /* ensure readable on gradient */
+    background: #fff;
     padding: 6px 10px;
     border-radius: 10px;
-    grid-row: 1; /* stay on header row */
     transition: all 0.2s ease;
+    order: 1;
+    align-self: flex-start;
+    position: absolute;
+    left: 10px;
+    top: 6px;
   }
+  
   .navbar-toggle:hover{
     box-shadow: 0 4px 12px rgba(46,87,255,0.2);
     transform: translateY(-1px);
   }
+  
   .riskcoins-navbar .navbar-logo {
     height: 40px;
     margin: 8px 6px;
-    justify-self: end;
-    grid-row: 1; /* stay on header row */
+    order: 2;
+    align-self: flex-end;
+    position: absolute;
+    right: 10px;
+    top: 6px;
   }
+  
   .riskcoins-navbar .navbar-links {
-    display: flex; /* keep for height animation */
+    display: flex;
     flex-direction: column;
     gap: 10px;
     margin: 0;
-    align-items: flex-start;
-    padding: 0 6px; /* inner padding collapses when closed */
-    grid-column: 1 / -1; /* dropdown spans full width below */
-    grid-row: 2;         /* force into second row */
-    background: transparent; /* keep dropdown on same gradient */
+    margin-top: 54px;
+    align-items: stretch;
+    padding: 0;
+    background: transparent;
     max-height: 0;
     overflow: hidden;
     opacity: 0;
     pointer-events: none;
-    transition: max-height .25s ease, opacity .25s ease, padding .25s ease;
+    transition: max-height .3s ease, opacity .3s ease, padding .3s ease;
+    order: 3;
   }
+  
   .riskcoins-navbar.open .navbar-links {
-    max-height: 600px; /* allow room for all links */
+    max-height: 600px;
     opacity: 1;
-    padding: 8px 6px 12px;
+    padding: 10px 6px 16px;
     pointer-events: auto;
   }
+  
   .riskcoins-navbar .navbar-links a { 
     font-size: 16px; 
-    padding: 8px 14px;
+    padding: 10px 14px;
     width: 100%;
+    text-align: left;
   }
 }
 
