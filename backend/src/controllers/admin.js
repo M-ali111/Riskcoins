@@ -335,8 +335,6 @@ router.delete('/students/:id', async (req, res) => {
 /* ---------------------------
    BULK UPLOAD STUDENTS FROM GOOGLE SHEET
 ---------------------------- */
-const { google } = require('googleapis');
-
 router.post('/students/bulk-upload', async (req, res) => {
   try {
     const { spreadsheetId, sheetName = 'Sheet1' } = req.body;
@@ -345,17 +343,51 @@ router.post('/students/bulk-upload', async (req, res) => {
       return res.status(400).json({ error: 'spreadsheetId is required' });
     }
 
-    // Initialize Google Sheets API (no auth required for public sheets)
-    const sheets = google.sheets({ version: 'v4' });
+    // Use public CSV export (works without authentication)
+    // Format: https://docs.google.com/spreadsheets/d/{spreadsheetId}/gviz/tq?tqx=out:csv&sheet={sheetName}
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+    
+    console.log('Fetching from URL:', csvUrl);
+    
+    // Fetch CSV data
+    const response = await fetch(csvUrl);
+    
+    if (!response.ok) {
+      if (response.status === 404) {
+        return res.status(400).json({ error: 'Sheet not found. Make sure the sheet is publicly accessible and the sheet name is correct.' });
+      }
+      return res.status(400).json({ error: `Failed to fetch sheet: ${response.statusText}` });
+    }
 
-    // Read data from Google Sheet
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${sheetName}!A:D`, // Columns: Name, Email, House, Password
-      key: process.env.GOOGLE_API_KEY || '', // Optional: add API key for rate limits
+    const csvText = await response.text();
+    
+    // Parse CSV manually (simple parsing for our use case)
+    const lines = csvText.split('\n').filter(line => line.trim());
+    
+    if (lines.length === 0) {
+      return res.status(400).json({ error: 'No data found in sheet' });
+    }
+
+    // Parse CSV rows (handle quoted values)
+    const rows = lines.map(line => {
+      const values = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim());
+      return values;
     });
-
-    const rows = response.data.values;
     
     if (!rows || rows.length === 0) {
       return res.status(400).json({ error: 'No data found in sheet' });
