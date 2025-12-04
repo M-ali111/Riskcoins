@@ -332,4 +332,126 @@ router.delete('/students/:id', async (req, res) => {
   } catch (err) { console.error(err); if (err.code === 'P2025') return res.status(404).json({ error: 'Student not found' }); res.status(500).json({ error: 'Failed to delete' }); }
 });
 
+/* ---------------------------
+   BULK UPLOAD STUDENTS FROM GOOGLE SHEET
+---------------------------- */
+const { google } = require('googleapis');
+
+router.post('/students/bulk-upload', async (req, res) => {
+  try {
+    const { spreadsheetId, sheetName = 'Sheet1' } = req.body;
+    
+    if (!spreadsheetId) {
+      return res.status(400).json({ error: 'spreadsheetId is required' });
+    }
+
+    // Initialize Google Sheets API (no auth required for public sheets)
+    const sheets = google.sheets({ version: 'v4' });
+
+    // Read data from Google Sheet
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${sheetName}!A:D`, // Columns: Name, Email, House, Password
+      key: process.env.GOOGLE_API_KEY || '', // Optional: add API key for rate limits
+    });
+
+    const rows = response.data.values;
+    
+    if (!rows || rows.length === 0) {
+      return res.status(400).json({ error: 'No data found in sheet' });
+    }
+
+    // Skip header row
+    const dataRows = rows.slice(1);
+    
+    const results = {
+      success: [],
+      failed: []
+    };
+
+    // Get all houses for mapping
+    const houses = await prisma.house.findMany();
+    const houseMap = {};
+    houses.forEach(h => {
+      houseMap[h.name.toLowerCase()] = h.id;
+    });
+
+    // Process each row
+    for (const row of dataRows) {
+      const [name, email, houseName, password] = row;
+      
+      // Skip empty rows
+      if (!name || !email) {
+        results.failed.push({ row, reason: 'Missing name or email' });
+        continue;
+      }
+
+      try {
+        // Find house ID
+        const houseId = houseName ? houseMap[houseName.toLowerCase()] : null;
+        
+        if (houseName && !houseId) {
+          results.failed.push({ name, email, reason: `House "${houseName}" not found` });
+          continue;
+        }
+
+        // Check if user already exists
+        const existing = await prisma.user.findUnique({ where: { email } });
+        if (existing) {
+          results.failed.push({ name, email, reason: 'Email already exists' });
+          continue;
+        }
+
+        // Hash password (use provided or generate default)
+        const tempPassword = password || 'student123';
+        const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+        // Create student
+        const student = await prisma.user.create({
+          data: {
+            name: name.trim(),
+            email: email.trim().toLowerCase(),
+            passwordHash,
+            role: 'STUDENT',
+            houseId: houseId || undefined,
+            isEmailVerified: false
+          },
+          include: { house: true }
+        });
+
+        results.success.push({
+          name: student.name,
+          email: student.email,
+          house: student.house?.name || 'None'
+        });
+
+      } catch (err) {
+        console.error('Error creating student:', err);
+        results.failed.push({ name, email, reason: err.message });
+      }
+    }
+
+    res.json({
+      message: 'Bulk upload completed',
+      total: dataRows.length,
+      successful: results.success.length,
+      failed: results.failed.length,
+      results
+    });
+
+  } catch (err) {
+    console.error('Bulk upload error:', err);
+    
+    if (err.message.includes('Unable to parse range')) {
+      return res.status(400).json({ error: 'Invalid sheet name. Make sure the sheet exists.' });
+    }
+    
+    if (err.message.includes('Requested entity was not found')) {
+      return res.status(400).json({ error: 'Invalid spreadsheet ID or sheet is not publicly accessible' });
+    }
+
+    res.status(500).json({ error: 'Failed to upload students: ' + err.message });
+  }
+});
+
 module.exports = router;

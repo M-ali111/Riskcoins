@@ -81,6 +81,7 @@
           <option value="">All Houses</option>
         </select>
         <button id="searchBtn" class="buy-btn">Search</button>
+        <button id="bulkUploadBtn" class="buy-btn" style="background: linear-gradient(135deg,#10b981 0%, #059669 100%);">📊 Bulk Upload</button>
       </div>
 
       <!-- TABLE -->
@@ -313,6 +314,119 @@ async function deleteStudent(id, name){
 
   alert("Deleted");
   loadStudents(currentPage);
+}
+
+/* ===========================================
+   BULK UPLOAD FROM GOOGLE SHEET
+=========================================== */
+
+document.getElementById("bulkUploadBtn").onclick = () => {
+  const html = `
+    <h3>📊 Bulk Upload Students</h3>
+    <p style="color:#666;font-size:13px;margin-bottom:16px">
+      Upload students from a Google Sheet. Make sure your sheet is <strong>publicly accessible</strong> (Anyone with link can view).
+    </p>
+    
+    <div style="background:#f0f9ff;border:1px solid #bfdbfe;padding:12px;border-radius:8px;margin-bottom:16px;font-size:13px">
+      <strong>📋 Sheet Format:</strong>
+      <ul style="margin:8px 0 0 20px;line-height:1.8">
+        <li>Column A: Student Name</li>
+        <li>Column B: Student Email</li>
+        <li>Column C: House Name (optional)</li>
+        <li>Column D: Temporary Password (optional, defaults to "student123")</li>
+      </ul>
+      <p style="margin-top:8px;color:#666">⚠️ First row will be skipped (assumed to be headers)</p>
+    </div>
+
+    <label style="font-weight:700;margin-bottom:4px;display:block">Google Sheet URL</label>
+    <input id="sheetUrl" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%;padding:10px;border:2px solid #e5e7ff;border-radius:8px;margin-bottom:12px">
+    
+    <label style="font-weight:700;margin-bottom:4px;display:block">Sheet Name (optional)</label>
+    <input id="sheetNameInput" value="Sheet1" placeholder="Sheet1" style="width:100%;padding:10px;border:2px solid #e5e7ff;border-radius:8px;margin-bottom:12px">
+
+    <div id="uploadStatus" style="margin-top:12px;display:none"></div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+      <button class="btn-quiet" onclick="closeModal()">Cancel</button>
+      <button class="buy-btn" onclick="processBulkUpload()" style="background: linear-gradient(135deg,#10b981 0%, #059669 100%);">Upload Students</button>
+    </div>
+  `;
+  createModal(html);
+};
+
+async function processBulkUpload() {
+  const sheetUrl = document.getElementById("sheetUrl").value.trim();
+  const sheetName = document.getElementById("sheetNameInput").value.trim() || "Sheet1";
+  const statusDiv = document.getElementById("uploadStatus");
+
+  if (!sheetUrl) {
+    alert("Please enter a Google Sheet URL");
+    return;
+  }
+
+  // Extract spreadsheet ID from URL
+  const match = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (!match) {
+    alert("Invalid Google Sheet URL. Please copy the full URL from your browser.");
+    return;
+  }
+
+  const spreadsheetId = match[1];
+
+  // Show loading status
+  statusDiv.style.display = "block";
+  statusDiv.innerHTML = `<div style="background:#fef3c7;border:1px solid #fbbf24;padding:10px;border-radius:8px;color:#92400e">
+    ⏳ Processing... Please wait.
+  </div>`;
+
+  try {
+    const res = await fetch(`${API_BASE}/api/admin/students/bulk-upload`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ spreadsheetId, sheetName })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      statusDiv.innerHTML = `<div style="background:#fee2e2;border:1px solid #ef4444;padding:10px;border-radius:8px;color:#991b1b">
+        ❌ Error: ${data.error || 'Upload failed'}
+      </div>`;
+      return;
+    }
+
+    // Show results
+    let resultHtml = `
+      <div style="background:#d1fae5;border:1px solid #10b981;padding:12px;border-radius:8px;color:#065f46;margin-bottom:12px">
+        ✅ Upload Complete!<br>
+        <strong>Total:</strong> ${data.total} | <strong>Success:</strong> ${data.successful} | <strong>Failed:</strong> ${data.failed}
+      </div>
+    `;
+
+    if (data.results.failed.length > 0) {
+      resultHtml += `
+        <div style="background:#fee2e2;border:1px solid #ef4444;padding:10px;border-radius:8px;color:#991b1b;max-height:200px;overflow-y:auto">
+          <strong>❌ Failed (${data.results.failed.length}):</strong>
+          <ul style="margin:8px 0 0 20px;font-size:12px">
+            ${data.results.failed.map(f => `<li>${f.name || 'Unknown'} (${f.email || 'No email'}): ${f.reason}</li>`).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
+    statusDiv.innerHTML = resultHtml;
+
+    // Refresh student list
+    setTimeout(() => {
+      loadStudents(1);
+    }, 2000);
+
+  } catch (err) {
+    console.error(err);
+    statusDiv.innerHTML = `<div style="background:#fee2e2;border:1px solid #ef4444;padding:10px;border-radius:8px;color:#991b1b">
+      ❌ Network error: ${err.message}
+    </div>`;
+  }
 }
 
 /* INIT */
